@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partonggoan GKPS Krakatau Sektor 4</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0e8;
+  --sidebar: #1a2a1a;
+  --sidebar-hover: #2d4a2d;
+  --accent: #8B6914;
+  --accent2: #c8960c;
+  --gold: #d4a843;
+  --text: #2c1f0e;
+  --muted: #7a6a55;
+  --card: #fff9f0;
+  --border: #d9c9a3;
+  --danger: #c0392b;
+  --success: #27ae60;
+  --info: #2980b9;
+  --radius: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Sans 3', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ===== PUBLIC ABSEN PAGE ===== */
+#public-page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #1a2a1a 0%, #2d4a2d 40%, #1a2a1a 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 30px 16px 40px;
+}
+.public-header {
+  text-align: center;
+  margin-bottom: 28px;
+  animation: fadeDown .5s ease;
+}
+@keyframes fadeDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:none; } }
+.public-header .cross { font-size: 38px; color: var(--gold); display: block; margin-bottom: 8px; }
+.public-header h1 { font-family: 'Cinzel', serif; font-size: 18px; color: var(--gold); letter-spacing: 1px; line-height: 1.4; }
+.public-header p { font-size: 13px; color: rgba(212,168,67,.6); margin-top: 4px; }
+
+.jadwal-card {
+  background: rgba(255,249,240,.95);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  margin-bottom: 20px;
+  animation: fadeUp .5s ease;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+.jadwal-card h2 { font-family: 'Lora', serif; font-size: 16px; color: var(--sidebar); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.jadwal-info-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+.jadwal-info-row .lbl { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; min-width: 90px; padding-top: 2px; }
+.jadwal-info-row .val { font-size: 14px; color: var(--text); font-weight: 600; }
+.jadwal-no-schedule { text-align: center; color: var(--muted); font-size: 14px; padding: 16px 0; }
+
+.absen-card {
+  background: rgba(255,249,240,.95);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  animation: fadeUp .6s ease;
+}
+.absen-card h2 { font-family: 'Lora', serif; font-size: 16px; color: var(--sidebar); margin-bottom: 16px; }
+.absen-section { margin-bottom: 18px; }
+.absen-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: block; }
+.absen-input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; color: var(--text); outline: none; transition: border .2s; }
+.absen-input:focus { border-color: var(--gold); }
+.radio-row { display: flex; gap: 12px; }
+.radio-btn {
+  flex: 1;
+  padding: 11px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all .2s;
+  background: #fff;
+  color: var(--muted);
+}
+.radio-btn.selected-hadir { border-color: var(--success); background: #d4edda; color: #155724; }
+.radio-btn.selected-tidak { border-color: var(--danger); background: #f8d7da; color: #721c24; }
+.galangan-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.galangan-input { padding: 9px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; color: var(--text); outline: none; text-align: center; transition: border .2s; }
+.galangan-input:focus { border-color: var(--gold); }
+.galangan-lbl { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; text-align: center; margin-bottom: 4px; }
+.btn-kirim { width: 100%; padding: 14px; background: var(--sidebar); color: var(--gold); border: none; border-radius: 10px; font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 1px; cursor: pointer; transition: background .2s; margin-top: 8px; }
+.btn-kirim:hover { background: var(--sidebar-hover); }
+.btn-selesai { width: 100%; padding: 14px; background: var(--success); color: #fff; border: none; border-radius: 10px; font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 1px; cursor: pointer; transition: background .2s; margin-top: 10px; }
+.btn-selesai:hover { opacity: .9; }
+
+.ringkasan-card {
+  background: rgba(255,249,240,.97);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  animation: fadeUp .5s ease;
+  display: none;
+}
+.ringkasan-card h2 { font-family: 'Lora', serif; font-size: 17px; color: var(--sidebar); margin-bottom: 16px; text-align: center; }
+.ringkasan-stat { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.ringkasan-stat-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+.ringkasan-stat-item .num { font-family: 'Cinzel', serif; font-size: 22px; color: var(--accent); font-weight: 700; }
+.ringkasan-stat-item .lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.btn-admin-link { display: block; text-align: center; color: rgba(212,168,67,.6); font-size: 12px; margin-top: 20px; cursor: pointer; text-decoration: underline; }
+
+/* ===== LOGIN ===== */
+#login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a2a1a 0%, #2d4a2d 50%, #1a2a1a 100%);
+}
+.login-box {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 50px 44px;
+  width: 380px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.4);
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.login-box .cross { font-size: 42px; color: var(--gold); margin-bottom: 8px; }
+.login-box h1 { font-family: 'Cinzel', serif; font-size: 16px; color: var(--sidebar); margin-bottom: 4px; line-height: 1.5; }
+.login-box p { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+.login-box input { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; background: #fff; margin-bottom: 14px; outline: none; transition: border .2s; }
+.login-box input:focus { border-color: var(--gold); }
+.login-box button { width: 100%; padding: 13px; background: var(--sidebar); color: var(--gold); border: none; border-radius: 8px; font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 1px; cursor: pointer; transition: background .2s; }
+.login-box button:hover { background: var(--sidebar-hover); }
+#login-err { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
+
+/* ===== LAYOUT ===== */
+#app { display: flex; min-height: 100vh; }
+#sidebar { width: 230px; min-height: 100vh; background: var(--sidebar); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+.sidebar-logo { padding: 22px 20px 16px; border-bottom: 1px solid rgba(212,168,67,.2); text-align: center; }
+.sidebar-logo .cross { font-size: 26px; color: var(--gold); }
+.sidebar-logo h2 { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold); letter-spacing: .5px; margin-top: 4px; line-height: 1.5; }
+.sidebar-logo p { font-size: 11px; color: rgba(212,168,67,.6); margin-top: 3px; }
+nav { flex: 1; padding: 14px 0; }
+nav a { display: flex; align-items: center; gap: 11px; padding: 11px 22px; color: rgba(255,255,255,.7); text-decoration: none; font-size: 13px; font-weight: 400; transition: all .2s; cursor: pointer; border-left: 3px solid transparent; }
+nav a:hover { background: rgba(212,168,67,.1); color: var(--gold); }
+nav a.active { background: rgba(212,168,67,.15); color: var(--gold); border-left-color: var(--gold); font-weight: 600; }
+nav a .icon { font-size: 16px; width: 22px; text-align: center; }
+.sidebar-footer { padding: 14px 22px; border-top: 1px solid rgba(212,168,67,.2); }
+.logout-btn { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.5); font-size: 13px; cursor: pointer; transition: color .2s; background: none; border: none; width: 100%; padding: 0; font-family: inherit; }
+.logout-btn:hover { color: var(--danger); }
+
+/* ===== MAIN ===== */
+#main { margin-left: 230px; flex: 1; min-height: 100vh; }
+.topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; }
+.topbar h1 { font-family: 'Lora', serif; font-size: 20px; color: var(--text); font-weight: 600; }
+.topbar span { font-size: 13px; color: var(--muted); }
+.content { padding: 28px; }
+
+/* ===== CARDS ===== */
+.stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+.stat-icon { font-size: 28px; }
+.stat-label { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.stat-val { font-family: 'Cinzel', serif; font-size: 22px; color: var(--accent); font-weight: 700; }
+
+/* ===== BUTTONS ===== */
+.btn { padding: 9px 18px; border-radius: 7px; border: none; font-family: inherit; font-size: 13.5px; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.btn-primary { background: var(--sidebar); color: var(--gold); }
+.btn-primary:hover { background: var(--sidebar-hover); }
+.btn-gold { background: var(--gold); color: var(--sidebar); }
+.btn-gold:hover { background: var(--accent2); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { opacity: .85; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { opacity: .85; }
+.btn-info { background: var(--info); color: #fff; }
+.btn-info:hover { opacity: .85; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--gold); color: var(--accent); }
+
+/* ===== TABLES ===== */
+.table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: auto; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+table { width: 100%; border-collapse: collapse; }
+thead th { background: var(--sidebar); color: var(--gold); font-family: 'Cinzel', serif; font-size: 12px; padding: 12px 14px; text-align: left; font-weight: 600; letter-spacing: .5px; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+tbody tr:hover { background: rgba(212,168,67,.07); }
+tbody td { padding: 11px 14px; font-size: 13.5px; }
+tbody tr:last-child { border-bottom: none; }
+
+/* ===== FORMS ===== */
+.form-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+.form-card h3 { font-family: 'Lora', serif; font-size: 16px; margin-bottom: 18px; color: var(--text); padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.form-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1/-1; }
+label { font-size: 12.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+input[type=text], input[type=number], input[type=password], input[type=date], select, textarea {
+  padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 7px; font-size: 14px; font-family: inherit; background: #fff; outline: none; transition: border .2s; color: var(--text);
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+.form-actions { margin-top: 18px; display: flex; gap: 10px; }
+
+/* ===== MODAL ===== */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 999; display: none; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--card); border-radius: 14px; width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-header h3 { font-family: 'Lora', serif; font-size: 17px; }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+.modal-body { padding: 22px 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ===== BADGES ===== */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.badge-green { background: #d4edda; color: #155724; }
+.badge-red { background: #f8d7da; color: #721c24; }
+.badge-gold { background: #fff3cd; color: #856404; }
+
+/* ===== HADIR ===== */
+.hadir-table thead th { font-size: 11px; padding: 10px 8px; text-align: center; }
+.hadir-table tbody td { text-align: center; padding: 9px 8px; font-size: 13px; }
+.hadir-table tbody td:first-child { text-align: left; padding-left: 14px; font-weight: 500; }
+.hadir-chk { cursor: pointer; font-size: 18px; transition: transform .1s; display: inline-block; }
+.hadir-chk:hover { transform: scale(1.3); }
+
+/* ===== TABS ===== */
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 22px; }
+.tab { padding: 10px 20px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s; }
+.tab.active { color: var(--accent); border-bottom-color: var(--gold); }
+.tab:hover { color: var(--accent); }
+
+/* ===== MONTH BAR ===== */
+.month-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.month-bar select, .month-bar input { max-width: 160px; }
+
+/* ===== DETAIL ===== */
+.detail-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+.detail-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+.detail-card .num { font-family: 'Cinzel', serif; font-size: 28px; color: var(--accent); font-weight: 700; }
+.detail-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ===== PAGE HEADER ===== */
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+.page-header h2 { font-family: 'Lora', serif; font-size: 18px; }
+.page-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ===== INFO BOX ===== */
+.info-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #664d03; margin-bottom: 16px; }
+
+/* ===== LAPORAN ===== */
+.laporan-row { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; }
+.laporan-row h4 { font-family: 'Lora', serif; font-size: 15px; color: var(--text); }
+.laporan-fields { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+.laporan-field { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+.laporan-field label { display: block; font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+.laporan-field input { border: none; padding: 0; font-size: 14px; width: 100%; outline: none; background: transparent; }
+
+.hidden { display: none !important; }
+
+/* ===== PRINT/PDF AREA ===== */
+#pdf-area { display: none; }
+
+/* ===== AUTOCOMPLETE ===== */
+.autocomplete-wrap { position: relative; }
+.autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1.5px solid var(--gold); border-radius: 0 0 8px 8px; z-index: 200; max-height: 180px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.autocomplete-item { padding: 10px 14px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background .15s; }
+.autocomplete-item:hover { background: rgba(212,168,67,.15); }
+.autocomplete-item:last-child { border-bottom: none; }
+
+/* ===== LIST ABSEN ===== */
+.absen-list { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
+.absen-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.absen-list-item:last-child { border-bottom: none; }
+.absen-list-item .name { font-weight: 600; }
+.absen-list-item .status-h { color: var(--success); font-weight: 700; }
+.absen-list-item .status-t { color: var(--danger); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ====== PUBLIC ABSEN PAGE ====== -->
+<div id="public-page">
+  <div class="public-header">
+    <span class="cross">✝</span>
+    <h1>PARTONGGOAN GKPS KRAKATAU<br>SEKTOR 4</h1>
+    <p id="pub-today-str"></p>
+  </div>
+
+  <!-- JADWAL KAMIS INI -->
+  <div class="jadwal-card" id="pub-jadwal-card">
+    <h2>📅 Jadwal Partonggoan Kamis Mendatang</h2>
+    <div id="pub-jadwal-info"></div>
+  </div>
+
+  <!-- FORM ABSEN -->
+  <div class="absen-card" id="pub-absen-card">
+    <h2>✅ Absen Partonggoan</h2>
+
+    <div class="absen-section">
+      <span class="absen-label">Nama (ketik nama anggota terdaftar)</span>
+      <div class="autocomplete-wrap">
+        <input class="absen-input" id="pub-nama" placeholder="Ketik nama..." oninput="pubNamaInput()" autocomplete="off">
+        <div class="autocomplete-list hidden" id="pub-autocomplete"></div>
+      </div>
+    </div>
+
+    <div class="absen-section">
+      <span class="absen-label">Kehadiran</span>
+      <div class="radio-row">
+        <div class="radio-btn" id="rb-hadir" onclick="setPubHadir(true)">✅ Hadir</div>
+        <div class="radio-btn" id="rb-tidak" onclick="setPubHadir(false)">❌ Tidak Hadir</div>
+      </div>
+    </div>
+
+    <div class="absen-section" id="pub-galangan-wrap">
+      <span class="absen-label">Galangan (Rp)</span>
+      <div class="galangan-row">
+        <div><span class="galangan-lbl">Galangan 1</span><input class="galangan-input" id="pub-g1" type="number" placeholder="0"></div>
+        <div><span class="galangan-lbl">Galangan 2</span><input class="galangan-input" id="pub-g2" type="number" placeholder="0"></div>
+        <div><span class="galangan-lbl">Galangan 3</span><input class="galangan-input" id="pub-g3" type="number" placeholder="0"></div>
+      </div>
+    </div>
+
+    <button class="btn-kirim" onclick="pubKirim()">📤 KIRIM ABSEN</button>
+
+    <!-- List absen yg sudah masuk -->
+    <div style="margin-top:18px;" id="pub-absen-list-wrap" class="hidden">
+      <span class="absen-label">Sudah Absen</span>
+      <div class="absen-list" id="pub-absen-list"></div>
+    </div>
+
+    <button class="btn-selesai" id="pub-btn-selesai" onclick="pubSelesai()" style="display:none">🏁 SELESAI</button>
+  </div>
+
+  <!-- RINGKASAN -->
+  <div class="ringkasan-card" id="pub-ringkasan">
+    <h2>📊 Ringkasan Partonggoan</h2>
+    <div id="pub-ringkasan-isi"></div>
+    <div id="pub-next-jadwal" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)"></div>
+  </div>
+
+  <a class="btn-admin-link" onclick="goAdminLogin()">🔐 Masuk ke Admin</a>
+</div>
+
+<!-- ====== LOGIN ====== -->
+<div id="login-page" class="hidden">
+  <div class="login-box">
+    <div class="cross">✝</div>
+    <h1>PARTONGGOAN GKPS KRAKATAU<br>SEKTOR 4</h1>
+    <p>Admin Panel</p>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()" />
+    <button onclick="doLogin()">MASUK</button>
+    <div id="login-err">Username atau password salah.</div>
+    <div style="margin-top:14px"><a style="font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline" onclick="showPublic()">← Kembali ke Halaman Absen</a></div>
+  </div>
+</div>
+
+<!-- ====== APP ====== -->
+<div id="app" class="hidden">
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <div class="cross">✝</div>
+      <h2>PARTONGGOAN GKPS<br>KRAKATAU SEKTOR 4</h2>
+      <p>Tahun 2026</p>
+    </div>
+    <nav>
+      <a class="nav-link active" onclick="goPage('dashboard')" data-page="dashboard"><span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-link" onclick="goPage('anggota')" data-page="anggota"><span class="icon">👥</span> Data Anggota</a>
+      <a class="nav-link" onclick="goPage('jadwal')" data-page="jadwal"><span class="icon">📅</span> Jadwal Partonggoan</a>
+      <a class="nav-link" onclick="goPage('hadir')" data-page="hadir"><span class="icon">✅</span> Daftar Hadir</a>
+      <a class="nav-link" onclick="goPage('laporan')" data-page="laporan"><span class="icon">📋</span> Laporan Partonggoan</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">🚪 Keluar</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div class="topbar">
+      <h1 id="page-title">Dashboard</h1>
+      <span id="today-date"></span>
+    </div>
+    <div class="content" id="page-content"></div>
+  </div>
+</div>
+
+<!-- ====== MODALS ====== -->
+
+<!-- Modal Anggota -->
+<div class="modal-overlay" id="modal-anggota">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-anggota-title">Tambah Anggota</h3>
+      <button class="modal-close" onclick="closeModal('modal-anggota')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Nama Lengkap</label><input type="text" id="inp-nama" placeholder="Nama anggota"></div>
+        <div class="form-group full"><label>Alamat</label><input type="text" id="inp-alamat" placeholder="Alamat rumah"></div>
+        <div class="form-group"><label>Jumlah Keluarga</label><input type="number" id="inp-keluarga" min="1" placeholder="Jiwa"></div>
+      </div>
+      <input type="hidden" id="inp-anggota-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-anggota')">Batal</button>
+      <button class="btn btn-primary" onclick="saveAnggota()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detail Anggota -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal" style="width:620px">
+    <div class="modal-header">
+      <h3 id="detail-title">Detail Anggota</h3>
+      <button class="modal-close" onclick="closeModal('modal-detail')">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<!-- Modal Jadwal Edit + Alamat + Hapus -->
+<div class="modal-overlay" id="modal-jadwal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-jadwal-title">Edit Jadwal</h3>
+      <button class="modal-close" onclick="closeModal('modal-jadwal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Tanggal</label><input type="text" id="jdw-tanggal" disabled style="background:#f5f0e8"></div>
+        <div class="form-group full"><label>Nama Namanjabui / Tuan Rumah</label><input type="text" id="jdw-tuanrumah" placeholder="Nama tuan rumah"></div>
+        <div class="form-group full"><label>Alamat Partonggoan</label><input type="text" id="jdw-alamat" placeholder="Alamat lengkap tempat partonggoan"></div>
+        <div class="form-group full"><label>Pengkhotbah</label><input type="text" id="jdw-pengkhotbah" placeholder="Nama pengkhotbah"></div>
+        <div class="form-group full"><label>Sibasa Doding</label><input type="text" id="jdw-sibasadoding" placeholder="Nama sibasa doding"></div>
+        <div class="form-group full"><label>Paragenda</label><input type="text" id="jdw-paragenda" placeholder="Nama paragenda"></div>
+      </div>
+      <input type="hidden" id="jdw-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="deleteJadwal(document.getElementById('jdw-id').value)">🗑 Hapus Jadwal</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-jadwal')">Batal</button>
+      <button class="btn btn-gold" onclick="exportJadwalPDF()">📄 PDF</button>
+      <button class="btn btn-primary" onclick="saveJadwal()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tambah Jadwal -->
+<div class="modal-overlay" id="modal-tambah-jadwal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>➕ Tambah Jadwal</h3>
+      <button class="modal-close" onclick="closeModal('modal-tambah-jadwal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Tanggal (Kamis)</label><input type="date" id="new-jdw-tanggal"></div>
+        <div class="form-group full"><label>Nama Namanjabui / Tuan Rumah</label><input type="text" id="new-jdw-tuanrumah" placeholder="Nama tuan rumah"></div>
+        <div class="form-group full"><label>Alamat Partonggoan</label><input type="text" id="new-jdw-alamat" placeholder="Alamat lengkap"></div>
+        <div class="form-group full"><label>Pengkhotbah</label><input type="text" id="new-jdw-pengkhotbah" placeholder="Nama pengkhotbah"></div>
+        <div class="form-group full"><label>Sibasa Doding</label><input type="text" id="new-jdw-sibasadoding"></div>
+        <div class="form-group full"><label>Paragenda</label><input type="text" id="new-jdw-paragenda"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-tambah-jadwal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveTambahJadwal()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF hidden area -->
+<div id="pdf-area" style="display:none;position:fixed;left:-9999px;top:0;width:800px;background:#fff;padding:40px;font-family:serif;"></div>
+
+<script>
+// ======================== DATA LAYER (localStorage) ========================
+const PASS = { user: 'admin', pass: 'gkps2026' };
+const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const DAYS_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+function load(key, def=[]) { try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch { return def; } }
+function save(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+function getAnggota() { return load('ptg_anggota'); }
+function getJadwal() { return load('ptg_jadwal', []); }
+function getHadir() { return load('ptg_hadir'); }
+function getLaporan() { return load('ptg_laporan'); }
+function getAbsenPublic() { return load('ptg_absen_public'); }
+
+// Re-number: anggota always sorted by creation order, no gaps
+function reNumber(arr) { return arr; } // numbering done via index in display
+
+// ======================== DATE UTILS ========================
+function getAllThursdays() {
+  const thursdays = [];
+  let d = new Date(2026, 0, 1);
+  while (d.getDay() !== 4) d.setDate(d.getDate() + 1);
+  const end = new Date(2026, 10, 30);
+  while (d <= end) { thursdays.push(new Date(d)); d.setDate(d.getDate() + 7); }
+  return thursdays;
+}
+function isoDate(d) { const dt = new Date(d); return dt.toISOString().split('T')[0]; }
+function formatTanggal(d) {
+  const dt = new Date(d + 'T12:00:00');
+  return `Kamis, ${dt.getDate()} ${MONTHS_ID[dt.getMonth()]} ${dt.getFullYear()}`;
+}
+function formatTanggalShort(d) {
+  const dt = new Date(d + 'T12:00:00');
+  return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+}
+
+// Next thursday from WIB now
+function getNextThursdayWIB() {
+  // WIB = UTC+7
+  const nowUTC = new Date();
+  const wibMs = nowUTC.getTime() + 7 * 3600000;
+  const wib = new Date(wibMs);
+  let d = new Date(wib);
+  d.setHours(0,0,0,0);
+  // Find next thursday (including today if it's thursday and before 19:00)
+  let dayOfWeek = d.getDay();
+  let daysUntilThur;
+  if (dayOfWeek === 4) {
+    // if today is thursday, check time
+    if (wib.getHours() < 19) {
+      daysUntilThur = 0;
+    } else {
+      daysUntilThur = 7;
+    }
+  } else if (dayOfWeek < 4) {
+    daysUntilThur = 4 - dayOfWeek;
+  } else {
+    daysUntilThur = 7 - dayOfWeek + 4;
+  }
+  d.setDate(d.getDate() + daysUntilThur);
+  return isoDate(d);
+}
+
+function initJadwal() {
+  const stored = load('ptg_jadwal', null);
+  if (stored && stored.length) return stored;
+  const thursdays = getAllThursdays();
+  const jadwal = thursdays.map((d, i) => ({
+    id: 'jdw_' + i,
+    tanggal: isoDate(d),
+    tuanRumah: '',
+    alamat: '',
+    pengkhotbah: '',
+    sibasaDoding: '',
+    paragenda: ''
+  }));
+  save('ptg_jadwal', jadwal);
+  return jadwal;
+}
+
+// ======================== PUBLIC PAGE ========================
+let pubHadir = null; // true/false
+let pubCurrentAbsen = []; // list {nama, hadir, g1, g2, g3, anggotaId}
+
+function showPublic() {
+  document.getElementById('public-page').classList.remove('hidden');
+  document.getElementById('login-page').classList.add('hidden');
+  document.getElementById('app').classList.add('hidden');
+  renderPublic();
+}
+
+function renderPublic() {
+  const jadwal = initJadwal();
+  const nowStr = getNextThursdayWIB();
+  const jadwalKini = jadwal.find(j => j.tanggal === nowStr);
+
+  // WIB time display
+  const nowUTC = new Date();
+  const wib = new Date(nowUTC.getTime() + 7 * 3600000);
+  const hariStr = DAYS_ID[wib.getDay()];
+  const tglStr = `${hariStr}, ${wib.getDate()} ${MONTHS_ID[wib.getMonth()]} ${wib.getFullYear()}`;
+  document.getElementById('pub-today-str').textContent = tglStr + ' (WIB)';
+
+  // Jadwal info
+  const infoEl = document.getElementById('pub-jadwal-info');
+  if (jadwalKini) {
+    infoEl.innerHTML = `
+      <div class="jadwal-info-row"><div class="lbl">📅 Hari/Tgl</div><div class="val">${formatTanggal(jadwalKini.tanggal)}</div></div>
+      <div class="jadwal-info-row"><div class="lbl">🕖 Jam</div><div class="val">19.00 WIB (7 Malam)</div></div>
+      <div class="jadwal-info-row"><div class="lbl">🏠 Namanjabui</div><div class="val">${jadwalKini.tuanRumah || '<em style="color:var(--muted)">Belum diisi</em>'}</div></div>
+      <div class="jadwal-info-row"><div class="lbl">📍 Alamat</div><div class="val">${jadwalKini.alamat || '<em style="color:var(--muted)">Belum diisi</em>'}</div></div>
+      <div class="jadwal-info-row"><div class="lbl">✝ Pengkhotbah</div><div class="val">${jadwalKini.pengkhotbah || '<em style="color:var(--muted)">Belum diisi</em>'}</div></div>
+    `;
+  } else {
+    infoEl.innerHTML = `<div class="jadwal-no-schedule">⚠️ Jadwal Kamis mendatang belum diisi admin.</div>`;
+  }
+
+  // Load existing absen for this date from public absen store
+  pubCurrentAbsen = getAbsenPublic().filter(a => a.tanggal === nowStr);
+  renderPubAbsenList();
+
+  // Show selesai button if ada absen
+  document.getElementById('pub-btn-selesai').style.display = pubCurrentAbsen.length > 0 ? 'block' : 'none';
+}
+
+function pubNamaInput() {
+  const val = document.getElementById('pub-nama').value.trim().toLowerCase();
+  const list = document.getElementById('pub-autocomplete');
+  if (!val) { list.classList.add('hidden'); return; }
+  const anggota = getAnggota();
+  const filtered = anggota.filter(a => a.nama.toLowerCase().includes(val)).slice(0, 8);
+  if (!filtered.length) { list.classList.add('hidden'); return; }
+  list.innerHTML = filtered.map(a => `<div class="autocomplete-item" onclick="selectPubAnggota('${a.id}','${a.nama.replace(/'/g,"\\'")}')">👤 ${a.nama}</div>`).join('');
+  list.classList.remove('hidden');
+}
+
+function selectPubAnggota(id, nama) {
+  document.getElementById('pub-nama').value = nama;
+  document.getElementById('pub-nama').dataset.anggotaId = id;
+  document.getElementById('pub-autocomplete').classList.add('hidden');
+}
+
+function setPubHadir(val) {
+  pubHadir = val;
+  document.getElementById('rb-hadir').className = 'radio-btn' + (val === true ? ' selected-hadir' : '');
+  document.getElementById('rb-tidak').className = 'radio-btn' + (val === false ? ' selected-tidak' : '');
+}
+
+function pubKirim() {
+  const nama = document.getElementById('pub-nama').value.trim();
+  const anggotaId = document.getElementById('pub-nama').dataset.anggotaId || '';
+  if (!nama) { alert('Masukkan nama terlebih dahulu!'); return; }
+  if (pubHadir === null) { alert('Pilih status kehadiran!'); return; }
+  const nowStr = getNextThursdayWIB();
+  const g1 = parseInt(document.getElementById('pub-g1').value) || 0;
+  const g2 = parseInt(document.getElementById('pub-g2').value) || 0;
+  const g3 = parseInt(document.getElementById('pub-g3').value) || 0;
+
+  let absenList = getAbsenPublic();
+  // Hapus data lama jika nama sama & tanggal sama (ganti dengan yg baru)
+  absenList = absenList.filter(a => !(a.tanggal === nowStr && a.nama.toLowerCase() === nama.toLowerCase()));
+  absenList.push({ tanggal: nowStr, nama, anggotaId, hadir: pubHadir, g1, g2, g3, ts: Date.now() });
+  save('ptg_absen_public', absenList);
+
+  // Sync ke ptg_hadir
+  if (anggotaId) {
+    let hadir = getHadir();
+    hadir = hadir.filter(h => !(h.anggotaId === anggotaId && h.tanggal === nowStr));
+    hadir.push({ anggotaId, tanggal: nowStr, hadir: pubHadir });
+    save('ptg_hadir', hadir);
+  }
+
+  pubCurrentAbsen = absenList.filter(a => a.tanggal === nowStr);
+  renderPubAbsenList();
+
+  // Reset form
+  document.getElementById('pub-nama').value = '';
+  document.getElementById('pub-nama').dataset.anggotaId = '';
+  document.getElementById('pub-g1').value = '';
+  document.getElementById('pub-g2').value = '';
+  document.getElementById('pub-g3').value = '';
+  setPubHadir(null); pubHadir = null;
+  document.getElementById('rb-hadir').className = 'radio-btn';
+  document.getElementById('rb-tidak').className = 'radio-btn';
+
+  document.getElementById('pub-btn-selesai').style.display = 'block';
+  alert('✅ Absen berhasil dikirim!');
+}
+
+function renderPubAbsenList() {
+  const wrap = document.getElementById('pub-absen-list-wrap');
+  const list = document.getElementById('pub-absen-list');
+  if (!pubCurrentAbsen.length) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  list.innerHTML = pubCurrentAbsen.map(a => `
+    <div class="absen-list-item">
+      <span class="name">${a.nama}</span>
+      <span class="${a.hadir ? 'status-h' : 'status-t'}">${a.hadir ? '✅ Hadir' : '❌ Tidak Hadir'}</span>
+    </div>`).join('');
+}
+
+function pubSelesai() {
+  const nowStr = getNextThursdayWIB();
+  const jadwal = initJadwal();
+  const jdwKini = jadwal.find(j => j.tanggal === nowStr);
+  const absen = getAbsenPublic().filter(a => a.tanggal === nowStr);
+  const totalH = absen.filter(a => a.hadir).length;
+  const totalTdk = absen.filter(a => !a.hadir).length;
+  const g1Total = absen.reduce((s,a) => s + (a.g1||0), 0);
+  const g2Total = absen.reduce((s,a) => s + (a.g2||0), 0);
+  const g3Total = absen.reduce((s,a) => s + (a.g3||0), 0);
+  const totalGal = g1Total + g2Total + g3Total;
+
+  document.getElementById('pub-absen-card').classList.add('hidden');
+
+  const ring = document.getElementById('pub-ringkasan');
+  ring.style.display = 'block';
+  document.getElementById('pub-ringkasan-isi').innerHTML = `
+    <div class="ringkasan-stat">
+      <div class="ringkasan-stat-item"><div class="num">${totalH}</div><div class="lbl">✅ Hadir</div></div>
+      <div class="ringkasan-stat-item"><div class="num">${totalTdk}</div><div class="lbl">❌ Tidak Hadir</div></div>
+      <div class="ringkasan-stat-item"><div class="num">Rp ${formatRp(totalGal)}</div><div class="lbl">💰 Total Galangan</div></div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);line-height:2">
+      <b>Tanggal:</b> ${jdwKini ? formatTanggal(jdwKini.tanggal) : nowStr}<br>
+      <b>Jam:</b> 19.00 WIB<br>
+      ${jdwKini?.tuanRumah ? `<b>Namanjabui:</b> ${jdwKini.tuanRumah}<br>` : ''}
+      ${jdwKini?.alamat ? `<b>Alamat:</b> ${jdwKini.alamat}<br>` : ''}
+      <b>Galangan 1:</b> Rp ${formatRp(g1Total)} | <b>Galangan 2:</b> Rp ${formatRp(g2Total)} | <b>Galangan 3:</b> Rp ${formatRp(g3Total)}
+    </div>
+  `;
+
+  // Tampil jadwal kamis selanjutnya (minggu depan)
+  const nextThur = jadwal.find(j => j.tanggal > nowStr);
+  if (nextThur) {
+    document.getElementById('pub-next-jadwal').innerHTML = `
+      <h3 style="font-family:'Lora',serif;font-size:14px;margin-bottom:8px">📅 Jadwal Kamis Selanjutnya</h3>
+      <div style="font-size:13px;line-height:2;color:var(--text)">
+        <b>${formatTanggal(nextThur.tanggal)}</b> — 19.00 WIB<br>
+        ${nextThur.tuanRumah ? `🏠 ${nextThur.tuanRumah}` : '<em style="color:var(--muted)">Tuan rumah belum diisi</em>'}<br>
+        ${nextThur.alamat ? `📍 ${nextThur.alamat}` : ''}
+      </div>`;
+  }
+}
+
+// ======================== AUTH ========================
+function goAdminLogin() {
+  document.getElementById('public-page').classList.add('hidden');
+  document.getElementById('login-page').classList.remove('hidden');
+}
+
+function doLogin() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  if (u === PASS.user && p === PASS.pass) {
+    document.getElementById('login-page').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('today-date').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    goPage('dashboard');
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+function doLogout() {
+  document.getElementById('login-page').classList.add('hidden');
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('public-page').classList.remove('hidden');
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  renderPublic();
+}
+
+// ======================== NAV ========================
+let curPage = 'dashboard';
+function goPage(page) {
+  curPage = page;
+  document.querySelectorAll('.nav-link').forEach(a => a.classList.toggle('active', a.dataset.page === page));
+  const titles = { dashboard:'Dashboard', anggota:'Data Anggota Sektor 4', jadwal:'Jadwal Partonggoan', hadir:'Daftar Hadir', laporan:'Laporan Partonggoan' };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  renderPage(page);
+}
+function renderPage(page) {
+  const el = document.getElementById('page-content');
+  if (page === 'dashboard') el.innerHTML = renderDashboard();
+  else if (page === 'anggota') el.innerHTML = renderAnggota();
+  else if (page === 'jadwal') el.innerHTML = renderJadwal();
+  else if (page === 'hadir') el.innerHTML = renderHadir();
+  else if (page === 'laporan') el.innerHTML = renderLaporan();
+}
+
+// ======================== DASHBOARD ========================
+function renderDashboard() {
+  const anggota = getAnggota();
+  const jadwal = initJadwal();
+  const hadir = getHadir();
+  const laporan = getLaporan();
+  const today = isoDate(new Date());
+  const upcoming = jadwal.filter(j => j.tanggal >= today).slice(0, 3);
+  const laporanDone = jadwal.filter(j => laporan.find(l => l.jadwalId === j.id)).length;
+
+  return `
+  <div class="stat-row">
+    <div class="stat-card"><div class="stat-icon">👥</div><div><div class="stat-label">Total Anggota</div><div class="stat-val">${anggota.length}</div></div></div>
+    <div class="stat-card"><div class="stat-icon">📅</div><div><div class="stat-label">Total Jadwal</div><div class="stat-val">${jadwal.length}</div></div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div><div class="stat-label">Laporan Selesai</div><div class="stat-val">${laporanDone}</div></div></div>
+    <div class="stat-card"><div class="stat-icon">📊</div><div><div class="stat-label">Rekap Kehadiran</div><div class="stat-val">${hadir.length}</div></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+    <div class="form-card">
+      <h3>📅 Jadwal Kamis Mendatang</h3>
+      ${upcoming.map(j => `
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-weight:600;color:var(--accent)">${formatTanggal(j.tanggal)}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:4px">
+            ${j.tuanRumah ? `🏠 ${j.tuanRumah}` : '<em>Tuan rumah belum diisi</em>'}<br>
+            ${j.alamat ? `📍 ${j.alamat}` : ''}
+            ${j.pengkhotbah ? `<br>✝ ${j.pengkhotbah}` : ''}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="form-card">
+      <h3>📋 Informasi Sistem</h3>
+      <div style="font-size:14px;line-height:2;color:var(--muted)">
+        <b style="color:var(--text)">Organisasi</b>: Partonggoan GKPS Krakatau<br>
+        <b style="color:var(--text)">Sektor</b>: 4<br>
+        <b style="color:var(--text)">Tahun Aktif</b>: 2026<br>
+        <b style="color:var(--text)">Total Pertemuan</b>: ${jadwal.length} Kamis<br>
+        <b style="color:var(--text)">Login Admin</b>: admin / gkps2026<br>
+        <b style="color:var(--text)">Jam Partonggoan</b>: 19.00 WIB (setiap Kamis)
+      </div>
+    </div>
+  </div>`;
+}
+
+// ======================== ANGGOTA ========================
+function renderAnggota() {
+  const anggota = getAnggota();
+  return `
+  <div class="page-header">
+    <h2>👥 Daftar Anggota Sektor 4</h2>
+    <button class="btn btn-primary" onclick="openModalAnggota()">➕ Tambah Anggota</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Nama Lengkap</th><th>Alamat</th><th>Jml Keluarga</th><th>Aksi</th></tr></thead>
+      <tbody>
+        ${anggota.length === 0 ? `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">Belum ada data anggota</td></tr>` :
+        anggota.map((a, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td><a href="#" onclick="showDetail('${a.id}')" style="color:var(--accent);font-weight:600;text-decoration:none">${a.nama}</a></td>
+            <td>${a.alamat || '-'}</td>
+            <td>${a.jumlahKeluarga || '-'} jiwa</td>
+            <td>
+              <button class="btn btn-sm btn-outline" onclick="editAnggota('${a.id}')">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteAnggota('${a.id}')">🗑</button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function openModalAnggota(id=null) {
+  ['inp-nama','inp-alamat','inp-keluarga','inp-anggota-id'].forEach(x => { const el = document.getElementById(x); if(el) el.value=''; });
+  document.getElementById('modal-anggota-title').textContent = 'Tambah Anggota';
+  if (id) {
+    const a = getAnggota().find(x => x.id === id);
+    if (a) {
+      document.getElementById('inp-nama').value = a.nama;
+      document.getElementById('inp-alamat').value = a.alamat || '';
+      document.getElementById('inp-keluarga').value = a.jumlahKeluarga || '';
+      document.getElementById('inp-anggota-id').value = a.id;
+      document.getElementById('modal-anggota-title').textContent = 'Edit Anggota';
+    }
+  }
+  document.getElementById('modal-anggota').classList.add('show');
+}
+function editAnggota(id) { openModalAnggota(id); }
+function saveAnggota() {
+  const nama = document.getElementById('inp-nama').value.trim();
+  const alamat = document.getElementById('inp-alamat').value.trim();
+  const jk = parseInt(document.getElementById('inp-keluarga').value) || 0;
+  const id = document.getElementById('inp-anggota-id').value;
+  if (!nama) { alert('Nama harus diisi'); return; }
+  let anggota = getAnggota();
+  if (id) {
+    anggota = anggota.map(a => a.id === id ? {...a, nama, alamat, jumlahKeluarga: jk} : a);
+  } else {
+    anggota.push({ id: 'ang_' + Date.now(), nama, alamat, jumlahKeluarga: jk });
+  }
+  save('ptg_anggota', anggota);
+  closeModal('modal-anggota');
+  renderPage('anggota');
+}
+function deleteAnggota(id) {
+  if (!confirm('Hapus anggota ini?')) return;
+  save('ptg_anggota', getAnggota().filter(a => a.id !== id));
+  renderPage('anggota');
+}
+
+function showDetail(id) {
+  const anggota = getAnggota().find(a => a.id === id);
+  const jadwal = initJadwal();
+  const hadir = getHadir();
+  if (!anggota) return;
+  const nama = anggota.nama;
+  const totalHadir = hadir.filter(h => h.anggotaId === id && h.hadir).length;
+  const jmlPengkhotbah = jadwal.filter(j => j.pengkhotbah && j.pengkhotbah.toLowerCase() === nama.toLowerCase()).length;
+  const jmlParagenda = jadwal.filter(j => j.paragenda && j.paragenda.toLowerCase() === nama.toLowerCase()).length;
+  const jmlSibasa = jadwal.filter(j => j.sibasaDoding && j.sibasaDoding.toLowerCase() === nama.toLowerCase()).length;
+  document.getElementById('detail-title').textContent = anggota.nama;
+  document.getElementById('detail-body').innerHTML = `
+    <div style="margin-bottom:16px"><p style="color:var(--muted);font-size:13px">📍 ${anggota.alamat || '-'} &nbsp;|&nbsp; 👨‍👩‍👧‍👦 ${anggota.jumlahKeluarga || 0} jiwa</p></div>
+    <div class="detail-grid">
+      <div class="detail-card"><div class="num">${totalHadir}</div><div class="lbl">✅ Total Hadir</div></div>
+      <div class="detail-card"><div class="num">${jmlPengkhotbah}</div><div class="lbl">✝ Pengkhotbah</div></div>
+      <div class="detail-card"><div class="num">${jmlParagenda}</div><div class="lbl">📖 Paragenda</div></div>
+      <div class="detail-card"><div class="num">${jmlSibasa}</div><div class="lbl">🎵 Sibasa Doding</div></div>
+    </div>
+    <h4 style="font-family:'Lora',serif;margin-bottom:10px">Riwayat Kehadiran</h4>
+    <div class="table-wrap" style="max-height:220px;overflow-y:auto">
+      <table>
+        <thead><tr><th>Tanggal</th><th>Status</th></tr></thead>
+        <tbody>
+          ${hadir.filter(h => h.anggotaId === id).map(h =>
+            `<tr><td>${formatTanggal(h.tanggal)}</td><td><span class="badge ${h.hadir?'badge-green':'badge-red'}">${h.hadir?'Hadir':'Tidak Hadir'}</span></td></tr>`
+          ).join('') || '<tr><td colspan="2" style="text-align:center;color:var(--muted)">Belum ada rekap</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+  document.getElementById('modal-detail').classList.add('show');
+}
+
+// ======================== JADWAL ========================
+let jadwalBulan = '';
+function renderJadwal() {
+  const jadwal = initJadwal();
+  const months = [...new Set(jadwal.map(j => j.tanggal.substring(0,7)))];
+  const filtered = jadwalBulan ? jadwal.filter(j => j.tanggal.startsWith(jadwalBulan)) : jadwal;
+
+  return `
+  <div class="page-header">
+    <h2>📅 Jadwal Partonggoan Kamis 2026</h2>
+    <div class="page-header-btns">
+      <button class="btn btn-gold" onclick="openTambahJadwal()">➕ Tambah Jadwal</button>
+    </div>
+  </div>
+  <div class="info-box">💡 Klik ✏️ Edit untuk mengisi Namanjabui, Alamat, Pengkhotbah, dll. Setiap jadwal bisa di-export PDF atau dihapus.</div>
+  <div class="month-bar">
+    <label style="text-transform:none;font-weight:600;font-size:14px">Filter Bulan:</label>
+    <select onchange="jadwalBulan=this.value;renderPage('jadwal')">
+      <option value="">Semua Bulan</option>
+      ${months.map(m => `<option value="${m}" ${jadwalBulan===m?'selected':''}>${MONTHS_ID[parseInt(m.split('-')[1])-1]} ${m.split('-')[0]}</option>`).join('')}
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Tanggal</th><th>Namanjabui / Tuan Rumah</th><th>Alamat</th><th>Pengkhotbah</th><th>Paragenda</th><th>Aksi</th></tr>
+      </thead>
+      <tbody>
+        ${filtered.map((j, i) => `
+          <tr>
+            <td>${i+1}</td>
+            <td><b>${formatTanggal(j.tanggal)}</b></td>
+            <td>${j.tuanRumah || '<span style="color:var(--muted)">-</span>'}</td>
+            <td style="max-width:160px;font-size:12px">${j.alamat || '<span style="color:var(--muted)">-</span>'}</td>
+            <td>${j.pengkhotbah || '<span style="color:var(--muted)">-</span>'}</td>
+            <td>${j.paragenda || '<span style="color:var(--muted)">-</span>'}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-sm btn-outline" onclick="openModalJadwal('${j.id}')">✏️ Edit</button>
+              <button class="btn btn-sm btn-gold" onclick="exportJadwalPDFById('${j.id}')">📄</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteJadwalById('${j.id}')">🗑</button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function openModalJadwal(id) {
+  const jadwal = initJadwal();
+  const j = jadwal.find(x => x.id === id);
+  if (!j) return;
+  document.getElementById('jdw-id').value = j.id;
+  document.getElementById('jdw-tanggal').value = formatTanggal(j.tanggal);
+  document.getElementById('jdw-tuanrumah').value = j.tuanRumah || '';
+  document.getElementById('jdw-alamat').value = j.alamat || '';
+  document.getElementById('jdw-pengkhotbah').value = j.pengkhotbah || '';
+  document.getElementById('jdw-sibasadoding').value = j.sibasaDoding || '';
+  document.getElementById('jdw-paragenda').value = j.paragenda || '';
+  document.getElementById('modal-jadwal').classList.add('show');
+}
+
+function saveJadwal() {
+  const id = document.getElementById('jdw-id').value;
+  let jadwal = initJadwal();
+  jadwal = jadwal.map(j => j.id !== id ? j : {
+    ...j,
+    tuanRumah: document.getElementById('jdw-tuanrumah').value.trim(),
+    alamat: document.getElementById('jdw-alamat').value.trim(),
+    pengkhotbah: document.getElementById('jdw-pengkhotbah').value.trim(),
+    sibasaDoding: document.getElementById('jdw-sibasadoding').value.trim(),
+    paragenda: document.getElementById('jdw-paragenda').value.trim()
+  });
+  save('ptg_jadwal', jadwal);
+  closeModal('modal-jadwal');
+  renderPage('jadwal');
+}
+
+function deleteJadwal(id) {
+  if (!confirm('Hapus jadwal ini?')) return;
+  let jadwal = initJadwal().filter(j => j.id !== id);
+  save('ptg_jadwal', jadwal);
+  closeModal('modal-jadwal');
+  renderPage('jadwal');
+}
+function deleteJadwalById(id) {
+  if (!confirm('Hapus jadwal ini?')) return;
+  let jadwal = initJadwal().filter(j => j.id !== id);
+  save('ptg_jadwal', jadwal);
+  renderPage('jadwal');
+}
+
+function openTambahJadwal() {
+  document.getElementById('new-jdw-tanggal').value = '';
+  document.getElementById('new-jdw-tuanrumah').value = '';
+  document.getElementById('new-jdw-alamat').value = '';
+  document.getElementById('new-jdw-pengkhotbah').value = '';
+  document.getElementById('new-jdw-sibasadoding').value = '';
+  document.getElementById('new-jdw-paragenda').value = '';
+  document.getElementById('modal-tambah-jadwal').classList.add('show');
+}
+
+function saveTambahJadwal() {
+  const tgl = document.getElementById('new-jdw-tanggal').value;
+  if (!tgl) { alert('Tanggal wajib diisi'); return; }
+  let jadwal = initJadwal();
+  if (jadwal.find(j => j.tanggal === tgl)) { alert('Jadwal tanggal ini sudah ada!'); return; }
+  jadwal.push({
+    id: 'jdw_' + Date.now(),
+    tanggal: tgl,
+    tuanRumah: document.getElementById('new-jdw-tuanrumah').value.trim(),
+    alamat: document.getElementById('new-jdw-alamat').value.trim(),
+    pengkhotbah: document.getElementById('new-jdw-pengkhotbah').value.trim(),
+    sibasaDoding: document.getElementById('new-jdw-sibasadoding').value.trim(),
+    paragenda: document.getElementById('new-jdw-paragenda').value.trim()
+  });
+  jadwal.sort((a,b) => a.tanggal.localeCompare(b.tanggal));
+  save('ptg_jadwal', jadwal);
+  closeModal('modal-tambah-jadwal');
+  renderPage('jadwal');
+}
+
+// Export Jadwal PDF
+function exportJadwalPDFById(id) {
+  const jadwal = initJadwal();
+  const j = jadwal.find(x => x.id === id);
+  if (!j) return;
+  const hadir = getHadir();
+  const laporan = getLaporan();
+  const lap = laporan.find(l => l.jadwalId === id) || {};
+  const totalH = hadir.filter(h => h.tanggal === j.tanggal && h.hadir).length;
+  exportJadwalToPDF(j, lap, totalH);
+}
+function exportJadwalPDF() {
+  const id = document.getElementById('jdw-id').value;
+  exportJadwalPDFById(id);
+}
+
+function exportJadwalToPDF(j, lap, totalH) {
+  const area = document.getElementById('pdf-area');
+  area.innerHTML = `
+    <div style="font-family:Georgia,serif;max-width:720px;margin:auto">
+      <div style="text-align:center;border-bottom:2px solid #1a2a1a;padding-bottom:16px;margin-bottom:20px">
+        <div style="font-size:28px;color:#1a2a1a">✝</div>
+        <h1 style="font-size:18px;color:#1a2a1a;letter-spacing:1px;margin:8px 0 4px">PARTONGGOAN GKPS KRAKATAU SEKTOR 4</h1>
+        <p style="font-size:13px;color:#666">Laporan Partonggoan</p>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:14px">
+        <tr><td style="padding:8px;color:#666;width:160px"><b>Tanggal</b></td><td style="padding:8px">${formatTanggal(j.tanggal)}</td></tr>
+        <tr style="background:#f5f0e8"><td style="padding:8px;color:#666"><b>Jam</b></td><td style="padding:8px">19.00 WIB</td></tr>
+        <tr><td style="padding:8px;color:#666"><b>Namanjabui</b></td><td style="padding:8px">${j.tuanRumah || '-'}</td></tr>
+        <tr style="background:#f5f0e8"><td style="padding:8px;color:#666"><b>Alamat</b></td><td style="padding:8px">${j.alamat || '-'}</td></tr>
+        <tr><td style="padding:8px;color:#666"><b>Pengkhotbah</b></td><td style="padding:8px">${j.pengkhotbah || '-'}</td></tr>
+        <tr style="background:#f5f0e8"><td style="padding:8px;color:#666"><b>Sibasa Doding</b></td><td style="padding:8px">${j.sibasaDoding || '-'}</td></tr>
+        <tr><td style="padding:8px;color:#666"><b>Paragenda</b></td><td style="padding:8px">${j.paragenda || '-'}</td></tr>
+        <tr style="background:#f5f0e8"><td style="padding:8px;color:#666"><b>Jumlah Hadir</b></td><td style="padding:8px;font-weight:bold;color:#8B6914">${lap.jumlahHadir !== undefined ? lap.jumlahHadir : totalH} orang</td></tr>
+        <tr><td style="padding:8px;color:#666"><b>Galangan 1</b></td><td style="padding:8px">Rp ${formatRp(lap.galangan1||0)}</td></tr>
+        <tr style="background:#f5f0e8"><td style="padding:8px;color:#666"><b>Galangan 2</b></td><td style="padding:8px">Rp ${formatRp(lap.galangan2||0)}</td></tr>
+        <tr><td style="padding:8px;color:#666"><b>Galangan 3</b></td><td style="padding:8px">Rp ${formatRp(lap.galangan3||0)}</td></tr>
+        <tr style="background:#fff3cd"><td style="padding:8px;color:#666"><b>Total Galangan</b></td><td style="padding:8px;font-weight:bold;color:#8B6914">Rp ${formatRp((lap.galangan1||0)+(lap.galangan2||0)+(lap.galangan3||0))}</td></tr>
+      </table>
+      <div style="margin-top:30px;text-align:center;font-size:12px;color:#999;border-top:1px solid #ddd;padding-top:12px">
+        Dicetak dari Sistem Partonggoan GKPS Krakatau Sektor 4
+      </div>
+    </div>`;
+  area.style.display = 'block';
+  html2canvas(area, { scale: 2, backgroundColor: '#fff', useCORS: true }).then(canvas => {
+    area.style.display = 'none';
+    const link = document.createElement('a');
+    link.download = `Jadwal_Partonggoan_${j.tanggal}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+// ======================== DAFTAR HADIR ========================
+let hadirBulan = new Date().getMonth() + 1;
+function renderHadir() {
+  const anggota = getAnggota();
+  const hadir = getHadir();
+  const jadwal = initJadwal();
+  const bulanOptions = [...Array(12).keys()].map(i => `<option value="${i+1}" ${hadirBulan===(i+1)?'selected':''}>${MONTHS_ID[i]}</option>`).join('');
+  const kamis = jadwal.filter(j => { const d = new Date(j.tanggal + 'T12:00:00'); return d.getMonth() + 1 === hadirBulan; });
+  const getHadirRec = (aid, tgl) => { const rec = hadir.find(h => h.anggotaId === aid && h.tanggal === tgl); return rec ? rec.hadir : null; };
+
+  return `
+  <div class="page-header">
+    <h2>✅ Daftar Hadir — Sektor 4</h2>
+    <button class="btn btn-gold" onclick="exportHadir()">📥 Export Excel</button>
+  </div>
+  <div class="month-bar">
+    <label style="text-transform:none;font-weight:600;font-size:14px">Bulan:</label>
+    <select onchange="hadirBulan=parseInt(this.value);renderPage('hadir')">${bulanOptions}</select>
+    <span style="font-size:13px;color:var(--muted)">Tahun 2026 | ${kamis.length} pertemuan Kamis</span>
+  </div>
+  ${anggota.length === 0 ? '<div class="info-box">⚠️ Belum ada data anggota.</div>' : ''}
+  ${kamis.length === 0 ? '<div class="info-box">⚠️ Tidak ada jadwal di bulan ini.</div>' : ''}
+  <div class="table-wrap" style="overflow-x:auto">
+    <table class="hadir-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding-left:14px">Nama Anggota</th>
+          ${kamis.map(k => `<th>${String(new Date(k.tanggal + 'T12:00:00').getDate()).padStart(2,'0')}/${String(new Date(k.tanggal + 'T12:00:00').getMonth()+1).padStart(2,'0')}</th>`).join('')}
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${anggota.map(a => {
+          const totalH = kamis.filter(k => getHadirRec(a.id, k.tanggal) === true).length;
+          return `<tr>
+            <td>${a.nama}</td>
+            ${kamis.map(k => {
+              const h = getHadirRec(a.id, k.tanggal);
+              const sym = h === true ? '✅' : h === false ? '❌' : '⬜';
+              return `<td><span class="hadir-chk" onclick="toggleHadir('${a.id}','${k.tanggal}')">${sym}</span></td>`;
+            }).join('')}
+            <td><b style="color:var(--accent)">${totalH}</b></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:14px;font-size:13px;color:var(--muted)">⬜ = Belum diisi &nbsp;|&nbsp; ✅ = Hadir &nbsp;|&nbsp; ❌ = Tidak Hadir (klik untuk toggle)</div>`;
+}
+
+function toggleHadir(aid, tgl) {
+  let hadir = getHadir();
+  const idx = hadir.findIndex(h => h.anggotaId === aid && h.tanggal === tgl);
+  if (idx === -1) { hadir.push({ anggotaId: aid, tanggal: tgl, hadir: true }); }
+  else if (hadir[idx].hadir === true) { hadir[idx].hadir = false; }
+  else { hadir.splice(idx, 1); }
+  save('ptg_hadir', hadir);
+  renderPage('hadir');
+}
+
+function exportHadir() {
+  const anggota = getAnggota();
+  const hadir = getHadir();
+  const jadwal = initJadwal();
+  const kamis = jadwal.filter(j => new Date(j.tanggal + 'T12:00:00').getMonth() + 1 === hadirBulan);
+  if (!kamis.length || !anggota.length) { alert('Tidak ada data untuk diekspor.'); return; }
+  const headers = ['No','Nama Anggota','Alamat',...kamis.map(k => `${String(new Date(k.tanggal+'T12:00:00').getDate()).padStart(2,'0')}/${String(new Date(k.tanggal+'T12:00:00').getMonth()+1).padStart(2,'0')}`),'Total Hadir'];
+  const rows = anggota.map((a, i) => {
+    const getH = (tgl) => { const r = hadir.find(h => h.anggotaId === a.id && h.tanggal === tgl); return r ? (r.hadir ? 'H' : 'X') : '-'; };
+    const total = kamis.filter(k => { const r = hadir.find(h => h.anggotaId === a.id && h.tanggal === k.tanggal); return r && r.hadir; }).length;
+    return [i+1, a.nama, a.alamat||'', ...kamis.map(k => getH(k.tanggal)), total];
+  });
+  const wb = XLSX.utils.book_new();
+  const title = [`DAFTAR HADIR PARTONGGOAN GKPS KRAKATAU SEKTOR 4 — ${MONTHS_ID[hadirBulan-1]} 2026`];
+  const wsData = [title, [], headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:headers.length-1} }];
+  XLSX.utils.book_append_sheet(wb, ws, `Hadir ${MONTHS_ID[hadirBulan-1]}`);
+  XLSX.writeFile(wb, `Daftar_Hadir_Sektor4_${MONTHS_ID[hadirBulan-1]}_2026.xlsx`);
+}
+
+// ======================== LAPORAN ========================
+let laporanBulan = new Date().getMonth() + 1;
+function renderLaporan() {
+  const jadwal = initJadwal();
+  const laporan = getLaporan();
+  const bulanOptions = [...Array(12).keys()].map(i => `<option value="${i+1}" ${laporanBulan===(i+1)?'selected':''}>${MONTHS_ID[i]}</option>`).join('');
+  const kamisBulan = jadwal.filter(j => new Date(j.tanggal + 'T12:00:00').getMonth() + 1 === laporanBulan);
+  const getLap = (jadwalId) => laporan.find(l => l.jadwalId === jadwalId) || {};
+
+  return `
+  <div class="page-header">
+    <h2>📋 Laporan Partonggoan</h2>
+    <div class="page-header-btns">
+      <button class="btn btn-gold" onclick="exportLaporan()">📥 Export Excel</button>
+    </div>
+  </div>
+  <div class="month-bar">
+    <label style="text-transform:none;font-weight:600;font-size:14px">Bulan:</label>
+    <select onchange="laporanBulan=parseInt(this.value);renderPage('laporan')">${bulanOptions}</select>
+    <span style="font-size:13px;color:var(--muted)">${kamisBulan.length} pertemuan Kamis</span>
+  </div>
+  ${kamisBulan.map(j => {
+    const lap = getLap(j.id);
+    return `
+    <div class="laporan-row">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <h4>📅 ${formatTanggal(j.tanggal)} &nbsp; <span style="font-size:12px;color:var(--muted)">🕖 19.00 WIB</span></h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-gold" onclick="exportLaporanPDFById('${j.id}')">📄 PDF/Foto</button>
+          <button class="btn btn-sm btn-danger" onclick="hapusLaporan('${j.id}')">🗑 Hapus</button>
+          <button class="btn btn-sm btn-primary" onclick="saveLaporanRow('${j.id}')">💾 Simpan</button>
+        </div>
+      </div>
+      <div class="laporan-fields" style="margin-top:12px">
+        <div class="laporan-field">
+          <label>🏠 Namanjabui / Tuan Rumah</label>
+          <div style="font-size:14px;font-weight:600">${j.tuanRumah || '<em style="color:var(--muted)">Belum diisi</em>'}</div>
+        </div>
+        <div class="laporan-field">
+          <label>📍 Alamat Partonggoan</label>
+          <div style="font-size:14px;font-weight:600">${j.alamat || '<em style="color:var(--muted)">Belum diisi</em>'}</div>
+        </div>
+        <div class="laporan-field">
+          <label>✝ Pengkhotbah</label>
+          <div style="font-size:14px;font-weight:600">${j.pengkhotbah || '<em style="color:var(--muted)">Belum diisi</em>'}</div>
+        </div>
+        <div class="laporan-field">
+          <label>📖 Paragenda</label>
+          <div style="font-size:14px;font-weight:600">${j.paragenda || '<em style="color:var(--muted)">Belum diisi</em>'}</div>
+        </div>
+        <div class="laporan-field">
+          <label>🎵 Sibasa Doding</label>
+          <div style="font-size:14px;font-weight:600">${j.sibasaDoding || '<em style="color:var(--muted)">Belum diisi</em>'}</div>
+        </div>
+        <div class="laporan-field">
+          <label>👥 Edit Jumlah Hadir</label>
+          <input type="number" id="lap-jh-${j.id}" value="${lap.jumlahHadir !== undefined ? lap.jumlahHadir : ''}" placeholder="Ketik jumlah" style="border:none;font-size:16px;font-weight:700;color:var(--accent);width:100%;outline:none;background:transparent">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px">
+        <div class="laporan-field"><label>💰 Galangan 1 (Rp)</label><input type="number" id="lap-g1-${j.id}" value="${lap.galangan1||''}" placeholder="0" style="border:none;font-size:14px;width:100%;outline:none;background:transparent"></div>
+        <div class="laporan-field"><label>💰 Galangan 2 (Rp)</label><input type="number" id="lap-g2-${j.id}" value="${lap.galangan2||''}" placeholder="0" style="border:none;font-size:14px;width:100%;outline:none;background:transparent"></div>
+        <div class="laporan-field"><label>💰 Galangan 3 (Rp)</label><input type="number" id="lap-g3-${j.id}" value="${lap.galangan3||''}" placeholder="0" style="border:none;font-size:14px;width:100%;outline:none;background:transparent"></div>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:var(--muted)">
+        Total Galangan: <b style="color:var(--accent)">Rp ${formatRp((parseInt(lap.galangan1)||0)+(parseInt(lap.galangan2)||0)+(parseInt(lap.galangan3)||0))}</b>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function saveLaporanRow(jadwalId) {
+  let laporan = getLaporan();
+  const g1 = parseInt(document.getElementById('lap-g1-'+jadwalId)?.value) || 0;
+  const g2 = parseInt(document.getElementById('lap-g2-'+jadwalId)?.value) || 0;
+  const g3 = parseInt(document.getElementById('lap-g3-'+jadwalId)?.value) || 0;
+  const jhEl = document.getElementById('lap-jh-'+jadwalId);
+  const jh = jhEl && jhEl.value !== '' ? parseInt(jhEl.value) : undefined;
+  const idx = laporan.findIndex(l => l.jadwalId === jadwalId);
+  const rec = { jadwalId, galangan1: g1, galangan2: g2, galangan3: g3 };
+  if (jh !== undefined) rec.jumlahHadir = jh;
+  if (idx === -1) laporan.push(rec); else laporan[idx] = rec;
+  save('ptg_laporan', laporan);
+  alert('✅ Laporan berhasil disimpan!');
+  renderPage('laporan');
+}
+
+function hapusLaporan(jadwalId) {
+  if (!confirm('Hapus data laporan ini?')) return;
+  let laporan = getLaporan().filter(l => l.jadwalId !== jadwalId);
+  save('ptg_laporan', laporan);
+  renderPage('laporan');
+}
+
+function exportLaporanPDFById(jadwalId) {
+  const jadwal = initJadwal();
+  const j = jadwal.find(x => x.id === jadwalId);
+  if (!j) return;
+  const lap = getLaporan().find(l => l.jadwalId === jadwalId) || {};
+  const hadir = getHadir();
+  const totalH = lap.jumlahHadir !== undefined ? lap.jumlahHadir : hadir.filter(h => h.tanggal === j.tanggal && h.hadir).length;
+  exportJadwalToPDF(j, lap, totalH);
+}
+
+function exportLaporan() {
+  const jadwal = initJadwal();
+  const laporan = getLaporan();
+  const hadir = getHadir();
+  const kamisBulan = jadwal.filter(j => new Date(j.tanggal + 'T12:00:00').getMonth() + 1 === laporanBulan);
+  const wb = XLSX.utils.book_new();
+  const headers = ['Tanggal','Jam','Namanjabui','Alamat','Pengkhotbah','Paragenda','Sibasa Doding','Jumlah Hadir','Galangan 1','Galangan 2','Galangan 3','Total Galangan'];
+  const rows = kamisBulan.map(j => {
+    const lap = laporan.find(l => l.jadwalId === j.id) || {};
+    const totalH = lap.jumlahHadir !== undefined ? lap.jumlahHadir : hadir.filter(h => h.tanggal === j.tanggal && h.hadir).length;
+    const g1=lap.galangan1||0, g2=lap.galangan2||0, g3=lap.galangan3||0;
+    return [formatTanggal(j.tanggal),'19.00 WIB',j.tuanRumah||'',j.alamat||'',j.pengkhotbah||'',j.paragenda||'',j.sibasaDoding||'',totalH,g1,g2,g3,g1+g2+g3];
+  });
+  const title = [`LAPORAN PARTONGGOAN GKPS KRAKATAU SEKTOR 4 — ${MONTHS_ID[laporanBulan-1]} 2026`];
+  const wsData = [title, [], headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:headers.length-1} }];
+  XLSX.utils.book_append_sheet(wb, ws, `Laporan ${MONTHS_ID[laporanBulan-1]}`);
+  XLSX.writeFile(wb, `Laporan_Partonggoan_GKPS_Sektor4_${MONTHS_ID[laporanBulan-1]}_2026.xlsx`);
+}
+
+// ======================== UTILS ========================
+function formatRp(n) { return (n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
+  // Close autocomplete if click outside
+  if (!e.target.closest('.autocomplete-wrap')) {
+    const ac = document.getElementById('pub-autocomplete');
+    if (ac) ac.classList.add('hidden');
+  }
+});
+
+// ======================== INIT ========================
+window.onload = () => {
+  initJadwal();
+  showPublic();
+};
+</script>
+</body>
+</html>
