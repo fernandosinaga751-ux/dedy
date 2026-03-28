@@ -1724,6 +1724,64 @@ async function expLapPhoto(jadwalId){
 }
 
 // ╔══════════════════════════════════════════════╗
+// ║     LAPORAN HELPER FUNCTIONS                 ║
+// ╚══════════════════════════════════════════════╝
+function updTotalHadir(jadwalId){
+  const d=parseInt(document.getElementById('lhd-'+jadwalId)?.value)||0;
+  const n=parseInt(document.getElementById('lhn-'+jadwalId)?.value)||0;
+  const total=d+n;
+  const numEl=document.getElementById('ht-num-'+jadwalId);
+  if(numEl) numEl.textContent=total;
+  updGrandTotal(jadwalId);
+}
+function updGrandTotal(jadwalId){
+  const g1=parseRp(document.getElementById('lg1-'+jadwalId)?.value)||0;
+  const g2=parseRp(document.getElementById('lg2-'+jadwalId)?.value)||0;
+  const g3=parseRp(document.getElementById('lg3-'+jadwalId)?.value)||0;
+  const stm=parseRp(document.getElementById('lstm-'+jadwalId)?.value)||0;
+  // collect BNU
+  let totalBNU=0, bi=0;
+  while(document.getElementById('bnu-vl-'+jadwalId+'-'+bi)!==null){
+    totalBNU+=parseRp(document.getElementById('bnu-vl-'+jadwalId+'-'+bi)?.value)||0;
+    bi++;
+  }
+  const grand=g1+g2+g3+stm+totalBNU;
+  const bnuTotEl=document.getElementById('bnu-total-'+jadwalId);
+  if(bnuTotEl) bnuTotEl.textContent='Rp '+numFmt(totalBNU);
+  const grandEl=document.getElementById('grand-total-'+jadwalId);
+  if(grandEl) grandEl.textContent='Rp '+numFmt(grand);
+}
+function addBNURow(jadwalId){
+  const list=document.getElementById('bnu-list-'+jadwalId);
+  const empty=document.getElementById('bnu-empty-'+jadwalId);
+  if(empty) empty.remove();
+  // count existing rows
+  let bi=0;
+  while(document.getElementById('bnu-row-'+jadwalId+'-'+bi)!==null) bi++;
+  const div=document.createElement('div');
+  div.innerHTML=`<div class="bnu-row" id="bnu-row-${jadwalId}-${bi}">
+    <input type="text" placeholder="Nama anggota / tamu" list="dl-anggota-lap" id="bnu-nm-${jadwalId}-${bi}" oninput="updGrandTotal('${jadwalId}')" style="border:none;outline:none;font-size:13.5px;padding:4px 0;background:transparent;width:100%">
+    <input type="text" placeholder="Tujuan persembahan" id="bnu-tj-${jadwalId}-${bi}" oninput="updGrandTotal('${jadwalId}')" style="border:none;outline:none;font-size:13px;padding:4px 0;background:transparent;width:100%;color:var(--muted)">
+    <div style="display:flex;gap:6px;align-items:center">
+      <div class="cur-box" style="min-width:130px"><span class="cur-prefix">Rp</span>
+        <input type="text" placeholder="0" id="bnu-vl-${jadwalId}-${bi}" class="cur-inp" oninput="fmtCurInp(this);updGrandTotal('${jadwalId}')">
+      </div>
+      <button class="bnu-del" onclick="delBNURow('${jadwalId}',${bi})">✕</button>
+    </div>
+  </div>`;
+  list.appendChild(div.firstElementChild);
+}
+function delBNURow(jadwalId,bi){
+  const row=document.getElementById('bnu-row-'+jadwalId+'-'+bi);
+  if(row) row.remove();
+  const list=document.getElementById('bnu-list-'+jadwalId);
+  if(list && !list.querySelector('.bnu-row')){
+    list.innerHTML=`<div id="bnu-empty-${jadwalId}" style="font-size:12px;color:var(--muted);padding:6px 0">Belum ada. Klik ➕ Tambah untuk menambahkan.</div>`;
+  }
+  updGrandTotal(jadwalId);
+}
+
+// ╔══════════════════════════════════════════════╗
 // ║     CURRENCY INPUT HELPERS                   ║
 // ╚══════════════════════════════════════════════╝
 function numFmt(n){ return (parseInt(n)||0).toLocaleString('id-ID'); }
