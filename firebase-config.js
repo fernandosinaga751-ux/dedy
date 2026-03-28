@@ -21,12 +21,13 @@
 // ╚══════════════════════════════════════════════════════════════╝
 
 const firebaseConfig = {
-  apiKey: "GANTI_DENGAN_API_KEY_ANDA",
-  authDomain: "NAMA_PROJECT.firebaseapp.com",
-  projectId: "NAMA_PROJECT",
-  storageBucket: "NAMA_PROJECT.appspot.com",
-  messagingSenderId: "NOMOR_SENDER_ID",
-  appId: "GANTI_DENGAN_APP_ID_ANDA"
+  apiKey: "AIzaSyAzJHGenZVN8RJOJycf-2hsk2vDHU2JF4c",
+  authDomain: "sektor4-3c937.firebaseapp.com",
+  projectId: "sektor4-3c937",
+  storageBucket: "sektor4-3c937.firebasestorage.app",
+  messagingSenderId: "425346338814",
+  appId: "1:425346338814:web:37b0280bb0bdd39b85baaf",
+  measurementId: "G-WKYZYCVGM0"
 };
 
 // Contoh config yang sudah diisi (HANYA CONTOH, ganti dengan milik Anda):
