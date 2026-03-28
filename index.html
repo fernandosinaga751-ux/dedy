@@ -53,8 +53,16 @@ a{text-decoration:none}
 .gal-wrap h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px}
 .gal-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .gal-inp-wrap label{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px}
-.gal-inp{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;text-align:center;outline:none;font-family:inherit}
-.gal-inp:focus{border-color:var(--gold)}
+.gal-inp-box{position:relative;display:flex;align-items:center;border:1.5px solid var(--border);border-radius:8px;background:#fff;overflow:hidden;transition:border .2s}
+.gal-inp-box:focus-within{border-color:var(--gold)}
+.gal-prefix{padding:10px 0 10px 10px;font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap;user-select:none}
+.gal-inp{border:none!important;border-radius:0!important;outline:none;font-family:inherit;font-size:14px;font-weight:600;padding:10px 10px 10px 4px;width:100%;background:transparent;color:var(--text);text-align:right}
+.gal-inp:focus{border-color:transparent}
+/* Currency input admin */
+.cur-box{position:relative;display:flex;align-items:center;border:1.5px solid var(--border);border-radius:7px;background:#fff;overflow:hidden;transition:border .2s}
+.cur-box:focus-within{border-color:var(--gold)}
+.cur-prefix{padding:9px 0 9px 11px;font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap;user-select:none}
+.cur-inp{border:none!important;outline:none;font-family:inherit;font-size:14px;font-weight:600;padding:9px 10px 9px 4px;width:100%;background:transparent;color:var(--text);text-align:right}
 
 /* Public buttons */
 .pbtn{width:100%;padding:14px;border-radius:10px;border:none;font-family:'Cinzel',serif;font-size:13px;letter-spacing:1px;cursor:pointer;margin-top:13px;transition:all .2s;font-weight:700}
@@ -163,7 +171,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 /* PAGE HEADER */
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .ph h2{font-family:'Lora',serif;font-size:17px}
-.ph .acts{display:flex;gap:7px;flex-wrap:wrap}
+.ph .acts,.ph-acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 
 /* BADGES */
 .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
@@ -605,9 +613,9 @@ function renderPubForm(anggota, lap){
     <div class="gal-wrap">
       <h4>💰 Persembahan / Galangan</h4>
       <div class="gal-row">
-        <div class="gal-inp-wrap"><label>Galangan 1 (Rp)</label><input class="gal-inp" type="number" id="pg1" value="${g1}" placeholder="0"></div>
-        <div class="gal-inp-wrap"><label>Galangan 2 (Rp)</label><input class="gal-inp" type="number" id="pg2" value="${g2}" placeholder="0"></div>
-        <div class="gal-inp-wrap"><label>Galangan 3 (Rp)</label><input class="gal-inp" type="number" id="pg3" value="${g3}" placeholder="0"></div>
+        <div class="gal-inp-wrap"><label>Galangan 1</label><div class="gal-inp-box"><span class="gal-prefix">Rp</span><input class="gal-inp" type="text" id="pg1" value="${g1?numFmt(g1):''}" placeholder="0" oninput="fmtCurInp(this)"></div></div>
+        <div class="gal-inp-wrap"><label>Galangan 2</label><div class="gal-inp-box"><span class="gal-prefix">Rp</span><input class="gal-inp" type="text" id="pg2" value="${g2?numFmt(g2):''}" placeholder="0" oninput="fmtCurInp(this)"></div></div>
+        <div class="gal-inp-wrap"><label>Galangan 3</label><div class="gal-inp-box"><span class="gal-prefix">Rp</span><input class="gal-inp" type="text" id="pg3" value="${g3?numFmt(g3):''}" placeholder="0" oninput="fmtCurInp(this)"></div></div>
       </div>
     </div>
     <button class="pbtn dark" id="pub-kirim-btn" onclick="submitAbsen()">📤 Kirim Data Kehadiran</button>
@@ -626,9 +634,9 @@ async function submitAbsen(){
   const btn=document.getElementById('pub-kirim-btn');
   if(btn){ btn.disabled=true; btn.textContent='⏳ Menyimpan...'; }
   try {
-    const g1=parseInt(document.getElementById('pg1')?.value)||0;
-    const g2=parseInt(document.getElementById('pg2')?.value)||0;
-    const g3=parseInt(document.getElementById('pg3')?.value)||0;
+    const g1=parseRp(document.getElementById('pg1')?.value)||0;
+    const g2=parseRp(document.getElementById('pg2')?.value)||0;
+    const g3=parseRp(document.getElementById('pg3')?.value)||0;
     const jdw=pubState.jadwal;
 
     // Save/create jadwal if it doesn't exist
@@ -771,7 +779,14 @@ async function pgAnggt(){
   return `
   <div class="ph">
     <h2>👥 Data Anggota Sektor 4</h2>
-    <button class="btn btn-p" onclick="oMoAng()">➕ Tambah Anggota</button>
+    <div class="ph-acts">
+      <label class="btn btn-s" style="cursor:pointer" title="Import dari Excel">📂 Import Excel<input type="file" accept=".xlsx,.xls" style="display:none" onchange="impAnggtXLS(this)"></label>
+      <button class="btn btn-g" onclick="expAnggtXLS()">📥 Export Excel</button>
+      <button class="btn btn-p" onclick="oMoAng()">➕ Tambah Anggota</button>
+    </div>
+  </div>
+  <div class="ibox" style="font-size:12.5px">
+    📌 <b>Import Excel:</b> Download template dulu via Export, isi data, lalu Import. Kolom wajib: <b>Nama Lengkap</b>. Kolom opsional: Alamat, Jumlah Keluarga.
   </div>
   <div class="tw">
     <table>
@@ -870,7 +885,10 @@ async function pgJdw(){
   return `
   <div class="ph">
     <h2>📅 Jadwal Partonggoan 2026</h2>
-    <div class="acts"><button class="btn btn-p" onclick="oMoJdw()">➕ Tambah Jadwal</button></div>
+    <div class="acts">
+      <button class="btn btn-g" onclick="expJdwXLS()">📥 Export Excel</button>
+      <button class="btn btn-p" onclick="oMoJdw()">➕ Tambah Jadwal</button>
+    </div>
   </div>
   <div class="mbar">
     <label>Filter Bulan:</label>
@@ -1082,20 +1100,20 @@ async function pgLap(){
         <div>
           <div class="lfl" style="margin-bottom:8px">💰 Galangan (Persembahan)</div>
           <div class="gal-lap">
-            <div class="lf"><div class="lfl">Galangan 1</div><input type="number" id="lg1-${j.id}" value="${g1||''}" placeholder="0" style="border:none;font-size:14px;width:100%;background:transparent;outline:none;padding:0"></div>
-            <div class="lf"><div class="lfl">Galangan 2</div><input type="number" id="lg2-${j.id}" value="${g2||''}" placeholder="0" style="border:none;font-size:14px;width:100%;background:transparent;outline:none;padding:0"></div>
-            <div class="lf"><div class="lfl">Galangan 3</div><input type="number" id="lg3-${j.id}" value="${g3||''}" placeholder="0" style="border:none;font-size:14px;width:100%;background:transparent;outline:none;padding:0"></div>
+            <div class="lf"><div class="lfl">Galangan 1</div><div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="lg1-${j.id}" value="${g1?numFmt(g1):''}" placeholder="0" oninput="fmtCurInp(this)" class="cur-inp"></div></div>
+            <div class="lf"><div class="lfl">Galangan 2</div><div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="lg2-${j.id}" value="${g2?numFmt(g2):''}" placeholder="0" oninput="fmtCurInp(this)" class="cur-inp"></div></div>
+            <div class="lf"><div class="lfl">Galangan 3</div><div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="lg3-${j.id}" value="${g3?numFmt(g3):''}" placeholder="0" oninput="fmtCurInp(this)" class="cur-inp"></div></div>
           </div>
-          <div style="margin-top:8px;font-size:13px;color:var(--muted)">Total: <b style="color:var(--accent);font-size:15px">${fmtRp(g1+g2+g3)}</b></div>
+          <div style="margin-top:8px;font-size:13px;color:var(--muted)">Total: <b style="color:var(--accent);font-size:15px">Rp ${numFmt(g1+g2+g3)}</b></div>
         </div>
       </div>
     </div>`;
   }).join('')}`;
 }
 async function saveLap(jadwalId){
-  const g1=parseInt(document.getElementById('lg1-'+jadwalId)?.value)||0;
-  const g2=parseInt(document.getElementById('lg2-'+jadwalId)?.value)||0;
-  const g3=parseInt(document.getElementById('lg3-'+jadwalId)?.value)||0;
+  const g1=parseRp(document.getElementById('lg1-'+jadwalId)?.value)||0;
+  const g2=parseRp(document.getElementById('lg2-'+jadwalId)?.value)||0;
+  const g3=parseRp(document.getElementById('lg3-'+jadwalId)?.value)||0;
   const jH=parseInt(document.getElementById('lh-'+jadwalId)?.value)||0;
   const lapAll=await fsAll('laporan','ord',true);
   const jdwAll=await fsAll('jadwal','ord',true);
@@ -1215,6 +1233,132 @@ async function expLapPhoto(jadwalId){
   const j=jdwAll.find(x=>x.id===jadwalId); const lap=lapAll.find(l=>l.jadwalId===jadwalId);
   const hC=hadir.filter(h=>h.tanggal===j?.tanggal&&h.hadir).length;
   if(j) await captureAndExport(buildTplLap(j,lap,hC),`Laporan_${j.tanggal}`,false);
+}
+
+// ╔══════════════════════════════════════════════╗
+// ║     CURRENCY INPUT HELPERS                   ║
+// ╚══════════════════════════════════════════════╝
+function numFmt(n){ return (parseInt(n)||0).toLocaleString('id-ID'); }
+function parseRp(s){ if(!s) return 0; return parseInt(String(s).replace(/[^\d]/g,''))||0; }
+function fmtCurInp(el){
+  const raw=el.value.replace(/[^\d]/g,'');
+  const cursor=el.selectionStart;
+  const prevLen=el.value.length;
+  el.value=raw?parseInt(raw).toLocaleString('id-ID'):'';
+  // Restore cursor roughly
+  const diff=el.value.length-prevLen;
+  try{ el.setSelectionRange(cursor+diff, cursor+diff); }catch(e){}
+}
+
+// ╔══════════════════════════════════════════════╗
+// ║     EXPORT / IMPORT ANGGOTA EXCEL           ║
+// ╚══════════════════════════════════════════════╝
+async function expAnggtXLS(){
+  const anggt=await fsAll('anggota','ord',true);
+  const wb=XLSX.utils.book_new();
+  const hdrs=['No','Nama Lengkap','Alamat','Jumlah Keluarga (jiwa)'];
+  const ttl=['DATA ANGGOTA PARTONGGOAN GKPS KRAKATAU SEKTOR 4 — TAHUN 2026'];
+  const rows=anggt.map((a,i)=>[i+1, a.nama||'', a.alamat||'', a.jumlahKeluarga||0]);
+  const wsData=[ttl,[],hdrs,...rows];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdrs.length-1}}];
+  ws['!cols']=[{wch:5},{wch:30},{wch:32},{wch:22}];
+  // Style header row
+  const hdrStyle={font:{bold:true},fill:{fgColor:{rgb:'1a2a1a'}}};
+  ['A1'].forEach(c=>{ if(ws[c]) ws[c].s=hdrStyle; });
+  XLSX.utils.book_append_sheet(wb,ws,'Data Anggota');
+  XLSX.writeFile(wb,'DataAnggota_GKPS_Krakatau_S4_2026.xlsx');
+}
+
+async function impAnggtXLS(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    try {
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+
+      // Find header row (cari baris yang ada "Nama")
+      let hdrRow=-1;
+      for(let i=0;i<Math.min(rows.length,6);i++){
+        if(rows[i].some(c=>String(c).toLowerCase().includes('nama'))){
+          hdrRow=i; break;
+        }
+      }
+      if(hdrRow<0){alert('Format Excel tidak dikenali.\nPastikan ada kolom "Nama Lengkap" di baris header.');input.value='';return;}
+
+      const hdr=rows[hdrRow].map(h=>String(h).toLowerCase().trim());
+      const iNama=hdr.findIndex(h=>h.includes('nama'));
+      const iAlamat=hdr.findIndex(h=>h.includes('alamat'));
+      const iKK=hdr.findIndex(h=>h.includes('keluarga')||h.includes('jiwa')||h.includes('kk'));
+
+      if(iNama<0){alert('Kolom "Nama Lengkap" tidak ditemukan!');input.value='';return;}
+
+      const dataRows=rows.slice(hdrRow+1).filter(r=>r[iNama]&&String(r[iNama]).trim());
+      if(!dataRows.length){alert('Tidak ada data anggota yang valid ditemukan.');input.value='';return;}
+
+      const confirmed=confirm(`Ditemukan ${dataRows.length} anggota dari file Excel.\n\nPilih:\n- OK = Tambahkan ke data yang sudah ada\n- Cancel = Batalkan import`);
+      if(!confirmed){input.value='';return;}
+
+      const existing=await fsAll('anggota','ord',true);
+      let ord=existing.length+1;
+      let added=0, skipped=0;
+      for(const row of dataRows){
+        const nm=String(row[iNama]).trim();
+        const al=iAlamat>=0?String(row[iAlamat]||'').trim():'';
+        const kk=iKK>=0?parseInt(row[iKK])||0:0;
+        // Skip duplicate nama
+        if(existing.find(x=>x.nama.toLowerCase()===nm.toLowerCase())){skipped++;continue;}
+        await fsAdd('anggota',{nama:nm,alamat:al,jumlahKeluarga:kk,ord:ord++});
+        added++;
+      }
+      input.value='';
+      alert(`✅ Import selesai!\n${added} anggota berhasil ditambahkan.\n${skipped} dilewati (nama sudah ada).`);
+      renderPage('anggota');
+    } catch(e){
+      alert('Gagal import: '+e.message);
+      input.value='';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ╔══════════════════════════════════════════════╗
+// ║     EXPORT JADWAL EXCEL                      ║
+// ╚══════════════════════════════════════════════╝
+async function expJdwXLS(){
+  const jdwAll=await fsAll('jadwal','ord',true);
+  const filtered=jdwBln?jdwAll.filter(j=>j.tanggal?.startsWith(jdwBln)):jdwAll;
+  if(!filtered.length){alert('Tidak ada jadwal untuk diekspor.');return;}
+
+  const wb=XLSX.utils.book_new();
+  const hdrs=['No','Tanggal','Hari','Jam','Alamat','Namanjabui / Tuan Rumah','Pengkhotbah','Paragenda','Sibasa Doding'];
+  const ttlTxt=jdwBln
+    ? `JADWAL PARTONGGOAN GKPS KRAKATAU SEKTOR 4 — ${MN[parseInt(jdwBln.split('-')[1])-1].toUpperCase()} 2026`
+    : 'JADWAL PARTONGGOAN GKPS KRAKATAU SEKTOR 4 — TAHUN 2026';
+  const rows=filtered.map((j,i)=>{
+    const d=new Date(j.tanggal+'T00:00:00');
+    return [
+      i+1,
+      `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`,
+      DY[d.getDay()],
+      JAM,
+      j.alamat||'',
+      j.tuanRumah||'',
+      j.pengkhotbah||'',
+      j.paragenda||'',
+      j.sibasaDoding||''
+    ];
+  });
+  const wsData=[[ttlTxt],[],hdrs,...rows];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdrs.length-1}}];
+  ws['!cols']=[{wch:4},{wch:14},{wch:9},{wch:10},{wch:26},{wch:26},{wch:24},{wch:22},{wch:22}];
+  const sfx=jdwBln?`_${MN[parseInt(jdwBln.split('-')[1])-1]}`:'_Semua';
+  XLSX.utils.book_append_sheet(wb,ws,`Jadwal${sfx}`);
+  XLSX.writeFile(wb,`JadwalPartonggoan_GKPS_Krakatau_S4${sfx}_2026.xlsx`);
 }
 
 // ╔══════════════════════════════════════════════╗
