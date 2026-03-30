@@ -23,11 +23,17 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--bg);color:var(--tex
 a{text-decoration:none}
 
 /* ── PUBLIC ─────────────────────────────────── */
-#public-page{min-height:100vh;background:linear-gradient(180deg,#1a2a1a 0%,#2d4a2d 30%,var(--bg) 100%)}
-.pub-header{text-align:center;padding:38px 20px 26px}
-.pub-header .cross{font-size:50px;color:var(--gold);display:block}
-.pub-header h1{font-family:'Cinzel',serif;font-size:20px;color:#fff;letter-spacing:2px;line-height:1.4;margin-top:8px}
-.pub-header p{font-size:13px;color:rgba(212,168,67,.7);margin-top:5px}
+#public-page{min-height:100vh;background:linear-gradient(180deg,#0d1a0d 0%,#1a2a1a 40%,#2d4a2d 70%,var(--bg) 100%)}
+.pub-header{text-align:center;padding:44px 20px 32px;position:relative}
+.pub-header::after{content:'';display:block;position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.pub-header .cross{font-size:54px;color:var(--gold);display:block;filter:drop-shadow(0 0 18px rgba(212,168,67,.45));animation:glowPulse 3s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 10px rgba(212,168,67,.3))}50%{filter:drop-shadow(0 0 24px rgba(212,168,67,.65))}}
+.pub-header h1{font-family:'Cinzel',serif;font-size:22px;color:#fff;letter-spacing:3px;line-height:1.5;margin-top:10px;text-shadow:0 2px 14px rgba(0,0,0,.5)}
+.pub-header .sub-title{font-size:11px;color:rgba(212,168,67,.55);margin-top:4px;letter-spacing:2px;text-transform:uppercase;font-family:'Lora',serif;font-style:italic}
+.pub-header p{font-size:13px;color:rgba(212,168,67,.7);margin-top:8px;padding:6px 18px;display:inline-block;border:1px solid rgba(212,168,67,.25);border-radius:20px;background:rgba(212,168,67,.07)}
+.pub-divider{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px auto 0;max-width:300px}
+.pub-divider span{height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(212,168,67,.35))}
+.pub-divider em{color:rgba(212,168,67,.45);font-size:12px;font-style:normal}
 .pub-wrap{max-width:650px;margin:0 auto;padding:0 15px 60px}
 .pub-card{background:var(--card);border-radius:14px;padding:22px;border:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.13);margin-bottom:16px}
 .pub-card h3{font-family:'Lora',serif;font-size:16px;color:var(--sidebar);margin-bottom:13px;padding-bottom:10px;border-bottom:1px solid var(--border)}
@@ -38,23 +44,41 @@ a{text-decoration:none}
 .ji .jil{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
 .ji .jiv{font-size:13.5px;font-weight:600}
 
-/* Search filter anggota */
-.pub-search-wrap{position:relative;margin-bottom:13px}
-.pub-search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff;outline:none;color:var(--text);transition:border .2s;box-sizing:border-box}
-.pub-search-wrap input:focus{border-color:var(--gold)}
-.pub-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
-.pub-search-count{font-size:11.5px;color:var(--muted);margin-top:5px;text-align:right}
-.a-item.hidden-by-filter{display:none!important}
+/* ── ABSEN SEARCH AUTOCOMPLETE ──────────────── */
+.absen-search-wrap{position:relative;margin-bottom:6px}
+.absen-search-wrap input{width:100%;padding:13px 16px 13px 44px;border:2px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;outline:none;color:var(--text);transition:border .2s,box-shadow .2s;box-sizing:border-box}
+.absen-search-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,67,.12)}
+.absen-search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:17px;pointer-events:none}
+.absen-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:2px solid var(--gold);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:200;max-height:220px;overflow-y:auto;display:none}
+.absen-dropdown.show{display:block}
+.absen-dd-item{padding:11px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;font-weight:600}
+.absen-dd-item:last-child{border-bottom:none}
+.absen-dd-item:hover,.absen-dd-item.focused{background:rgba(212,168,67,.12);color:var(--accent)}
+.absen-dd-item em{font-size:11px;color:var(--muted);font-style:normal;font-weight:400;display:block;margin-top:1px}
+.absen-dd-empty{padding:14px 16px;color:var(--muted);font-size:13px;text-align:center}
 
-/* Anggota absen item */
-.a-item{display:flex;align-items:center;justify-content:space-between;padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:7px;background:#fff;transition:border .2s}
-.a-item:hover{border-color:var(--gold)}
-.a-item .an{font-size:13.5px;font-weight:600}
-.a-item .as{font-size:11.5px;color:var(--muted);margin-top:1px}
-.tog-wrap{display:flex;gap:5px;flex-shrink:0}
-.tbtn{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;background:#fff;font-family:inherit;transition:all .2s;white-space:nowrap}
-.tbtn.on-h{background:#d4edda;border-color:var(--success);color:#155724}
-.tbtn.on-t{background:#f8d7da;border-color:var(--danger);color:#721c24}
+/* Daftar anggota dipilih */
+.absen-list{margin-top:10px}
+.absen-list-empty{text-align:center;color:var(--muted);font-size:13px;padding:20px 10px;border:2px dashed var(--border);border-radius:10px;margin-top:6px}
+.a-item{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border:2px solid var(--border);border-radius:10px;margin-bottom:8px;background:#fff;transition:border .2s,box-shadow .2s;animation:slideIn .2s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.a-item:hover{border-color:var(--gold);box-shadow:0 2px 10px rgba(212,168,67,.12)}
+.a-item.status-hadir{border-color:var(--success);background:#f0fff4}
+.a-item.status-tidak{border-color:var(--danger);background:#fff5f5}
+.a-item .an{font-size:14px;font-weight:700}
+.a-item .as{font-size:11.5px;color:var(--muted);margin-top:2px}
+.tog-wrap{display:flex;gap:6px;flex-shrink:0}
+.tbtn{padding:6px 13px;border-radius:20px;border:2px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;background:#fff;font-family:inherit;transition:all .2s;white-space:nowrap}
+.tbtn.on-h{background:#d4edda;border-color:var(--success);color:#155724;box-shadow:0 2px 6px rgba(39,174,96,.2)}
+.tbtn.on-t{background:#f8d7da;border-color:var(--danger);color:#721c24;box-shadow:0 2px 6px rgba(192,57,43,.2)}
+.a-remove{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:4px 6px;margin-left:4px;border-radius:5px;transition:all .15s;line-height:1}
+.a-remove:hover{color:var(--danger);background:#fff0f0}
+.absen-counter{font-size:12px;color:var(--muted);padding:6px 0 2px;text-align:right}
+.absen-counter b{color:var(--accent)}
+
+/* Old search count — keep hidden */
+.pub-search-count{display:none}
+.a-item.hidden-by-filter{display:none!important}
 
 /* Galangan */
 .gal-wrap{padding-top:14px;margin-top:14px;border-top:1px dashed var(--border)}
@@ -292,8 +316,10 @@ datalist option{font-size:13px}
     <div class="pub-logo-wrap">
       <img id="pub-logo-img" class="logo-gkps" src="" alt="GKPS" onerror="this.style.display='none'">
     </div>
+    <div class="pub-divider"><span></span><em>✦</em><span></span></div>
     <h1>PARTONGGOAN<br>GKPS KRAKATAU SEKTOR 4</h1>
-    <p>Ibadah Rumah Tangga — Setiap Hari Kamis, Pukul 19.00 WIB</p>
+    <div class="sub-title">Ibadah Rumah Tangga · Tahun 2026</div>
+    <p>📅 Setiap Hari Kamis, Pukul 19.00 WIB</p>
   </div>
   <div class="pub-wrap">
     <div id="pub-jadwal"></div>
@@ -601,7 +627,7 @@ async function renderPage(p){
 // ║           PUBLIC PAGE                        ║
 // ╚══════════════════════════════════════════════╝
 async function loadPublic(){
-  pubState={ map:{}, jadwal:null, selesai:false };
+  pubState={ map:{}, jadwal:null, selesai:false, _anggota:[], _selectedIds:new Set() };
   ['pub-form','pub-summary','pub-next'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){ el.classList.add('hidden'); el.innerHTML=''; }
@@ -619,6 +645,7 @@ async function loadPublic(){
 
     // Load existing absen data
     const anggota=await fsAll('anggota','ord',true);
+    pubState._anggota = anggota;
     if(jdw.id){
       const exH=await fsWhere('hadir','jadwalId','==',jdw.id);
       exH.forEach(h=>{ pubState.map[h.anggotaId]=h.hadir; });
@@ -627,6 +654,24 @@ async function loadPublic(){
     }
     document.getElementById('pub-form').innerHTML=renderPubForm(anggota, pubState.laporan);
     document.getElementById('pub-form').classList.remove('hidden');
+
+    // Render anggota yang sudah absen sebelumnya
+    if(Object.keys(pubState.map).length > 0){
+      const list = document.getElementById('pub-ang-list');
+      if(list){
+        list.innerHTML='';
+        Object.keys(pubState.map).forEach(aid=>{
+          const a = anggota.find(x=>x.id===aid);
+          if(a){
+            pubState._selectedIds.add(aid);
+            const div=document.createElement('div');
+            div.innerHTML=renderAbsenItem(a);
+            list.appendChild(div.firstElementChild);
+          }
+        });
+        updateAbsenCounter();
+      }
+    }
   } catch(e){
     jEl.innerHTML=`<div class="pub-card" style="color:var(--danger)">
       <b>⚠️ Tidak dapat memuat data.</b><br>
@@ -654,32 +699,29 @@ function renderPubForm(anggota, lap){
   const stm=lap?.stm||'';
   const bnuArr=Array.isArray(lap?.bnu)?lap.bnu:[];
   const angNama=anggota.map(a=>a.nama);
+
+  // Simpan data anggota ke state untuk diakses autocomplete
+  pubState._anggota = anggota;
+
   return `<div class="pub-card">
     <h3>✅ Absen Kehadiran Anggota</h3>
-    ${anggota.length>0?`
-    <div class="pub-search-wrap">
-      <span class="pub-search-icon">🔍</span>
-      <input type="text" id="pub-search-input" placeholder="Cari nama anggota..." autocomplete="off"
-        oninput="filterPubAnggota(this.value)"
-        list="dl-anggota-pub-search">
-      <datalist id="dl-anggota-pub-search">${anggota.map(a=>'<option value="'+a.nama+'">').join('')}</datalist>
+    ${anggota.length===0
+      ? '<p style="text-align:center;color:var(--muted);padding:18px 0">Belum ada data anggota. Tambahkan di menu Admin.</p>'
+      : `
+    <div class="absen-search-wrap" id="absen-search-wrap">
+      <span class="absen-search-icon">🔍</span>
+      <input type="text" id="absen-search-input"
+        placeholder="Ketik nama anggota..."
+        autocomplete="off"
+        oninput="handleAbsenSearch(this.value)"
+        onkeydown="handleAbsenKey(event)"
+        onfocus="handleAbsenSearch(this.value)"
+      >
+      <div class="absen-dropdown" id="absen-dropdown"></div>
     </div>
-    <div class="pub-search-count" id="pub-search-count">${anggota.length} anggota</div>`:''}
-    <div id="pub-ang-list">
-      ${anggota.length===0
-        ? '<p style="text-align:center;color:var(--muted);padding:18px 0">Belum ada data anggota. Tambahkan di menu Admin.</p>'
-        : anggota.map((a,i)=>`
-          <div class="a-item">
-            <div>
-              <div class="an">${i+1}. ${a.nama}</div>
-              ${a.alamat?`<div class="as">📍 ${a.alamat}</div>`:''}
-            </div>
-            <div class="tog-wrap">
-              <button class="tbtn ${pubState.map[a.id]===true?'on-h':''}" id="btn-h-${a.id}" onclick="setAbs('${a.id}',true)">✅ Hadir</button>
-              <button class="tbtn ${pubState.map[a.id]===false?'on-t':''}" id="btn-t-${a.id}" onclick="setAbs('${a.id}',false)">❌ Tidak</button>
-            </div>
-          </div>`).join('')}
-    </div>
+    <div class="absen-counter" id="absen-counter">Belum ada anggota dipilih</div>
+    <div class="absen-list" id="pub-ang-list"></div>
+    `}
 
     <!-- GALANGAN -->
     <div class="gal-wrap">
@@ -731,36 +773,156 @@ function renderPubForm(anggota, lap){
 }
 function setAbs(id, val){
   pubState.map[id]=val;
+  // Update item card style
+  const item=document.querySelector(`.a-item[data-id="${id}"]`);
+  if(item){
+    item.classList.toggle('status-hadir', val===true);
+    item.classList.toggle('status-tidak', val===false);
+  }
   const bH=document.getElementById('btn-h-'+id);
   const bT=document.getElementById('btn-t-'+id);
   if(bH){ bH.className='tbtn'+(val===true?' on-h':''); }
   if(bT){ bT.className='tbtn'+(val===false?' on-t':''); }
+  updateAbsenCounter();
 }
 
-function filterPubAnggota(q){
-  const items=document.querySelectorAll('#pub-ang-list .a-item');
-  const keyword=(q||'').trim().toLowerCase();
-  let visible=0;
-  items.forEach(item=>{
-    const nameEl=item.querySelector('.an');
-    if(!nameEl){visible++;return;}
-    const name=nameEl.textContent.replace(/^\d+\.\s*/,'').toLowerCase();
-    if(!keyword||name.includes(keyword)){
-      item.classList.remove('hidden-by-filter');
-      visible++;
-    } else {
-      item.classList.add('hidden-by-filter');
+function updateAbsenCounter(){
+  const el=document.getElementById('absen-counter');
+  if(!el) return;
+  const total=Object.keys(pubState.map).length;
+  if(total===0){ el.textContent='Belum ada anggota dipilih'; return; }
+  const hadir=Object.values(pubState.map).filter(v=>v===true).length;
+  const tidak=Object.values(pubState.map).filter(v=>v===false).length;
+  const belum=Object.values(pubState.map).filter(v=>v===undefined).length;
+  el.innerHTML=`<b>${total}</b> anggota dipilih &nbsp;·&nbsp; ✅ <b>${hadir}</b> Hadir &nbsp;·&nbsp; ❌ <b>${tidak}</b> Tidak`;
+}
+
+function renderAbsenItem(a){
+  const status=pubState.map[a.id];
+  const cls=status===true?'status-hadir':status===false?'status-tidak':'';
+  return `<div class="a-item ${cls}" data-id="${a.id}">
+    <div>
+      <div class="an">${a.nama}</div>
+      ${a.alamat?`<div class="as">📍 ${a.alamat}</div>`:''}
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <div class="tog-wrap">
+        <button class="tbtn ${status===true?'on-h':''}" id="btn-h-${a.id}" onclick="setAbs('${a.id}',true)">✅ Hadir</button>
+        <button class="tbtn ${status===false?'on-t':''}" id="btn-t-${a.id}" onclick="setAbs('${a.id}',false)">❌ Tidak</button>
+      </div>
+      <button class="a-remove" onclick="removeAbsenItem('${a.id}')" title="Hapus dari daftar">✕</button>
+    </div>
+  </div>`;
+}
+
+function removeAbsenItem(id){
+  delete pubState.map[id];
+  const item=document.querySelector(`.a-item[data-id="${id}"]`);
+  if(item) item.remove();
+  updateAbsenCounter();
+  // Juga hapus dari _selectedIds
+  if(pubState._selectedIds) pubState._selectedIds.delete(id);
+}
+
+// ── AUTOCOMPLETE HANDLERS ─────────────────────
+let _absenFocusIdx = -1;
+
+function handleAbsenSearch(q){
+  const anggota = pubState._anggota || [];
+  const kw = (q||'').trim().toLowerCase();
+  const dd = document.getElementById('absen-dropdown');
+  if(!dd) return;
+
+  if(!kw){ dd.classList.remove('show'); dd.innerHTML=''; _absenFocusIdx=-1; return; }
+
+  const selectedIds = pubState._selectedIds || new Set();
+  const filtered = anggota.filter(a=>
+    a.nama.toLowerCase().includes(kw) && !selectedIds.has(a.id)
+  ).slice(0,8);
+
+  if(filtered.length===0){
+    dd.innerHTML=`<div class="absen-dd-empty">Tidak ditemukan anggota "${q}"</div>`;
+    dd.classList.add('show');
+    _absenFocusIdx=-1;
+    return;
+  }
+  dd.innerHTML = filtered.map((a,i)=>`
+    <div class="absen-dd-item" data-id="${a.id}" data-idx="${i}"
+      onmousedown="selectAbsenItem('${a.id}')"
+      onmouseover="setDdFocus(${i})">
+      ${a.nama}
+      ${a.alamat?`<em>📍 ${a.alamat}</em>`:''}
+    </div>`).join('');
+  dd.classList.add('show');
+  _absenFocusIdx=-1;
+}
+
+function handleAbsenKey(e){
+  const dd=document.getElementById('absen-dropdown');
+  if(!dd||!dd.classList.contains('show')) return;
+  const items=dd.querySelectorAll('.absen-dd-item');
+  if(e.key==='ArrowDown'){ e.preventDefault(); setDdFocus(Math.min(_absenFocusIdx+1,items.length-1)); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); setDdFocus(Math.max(_absenFocusIdx-1,0)); }
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    if(_absenFocusIdx>=0&&items[_absenFocusIdx]){
+      const id=items[_absenFocusIdx].dataset.id;
+      if(id) selectAbsenItem(id);
+    } else if(items.length>0){
+      const id=items[0].dataset.id;
+      if(id) selectAbsenItem(id);
     }
-  });
-  const countEl=document.getElementById('pub-search-count');
-  if(countEl){
-    if(keyword){
-      countEl.textContent=visible+' dari '+items.length+' anggota';
-    } else {
-      countEl.textContent=items.length+' anggota';
-    }
+  } else if(e.key==='Escape'){
+    dd.classList.remove('show');
   }
 }
+
+function setDdFocus(idx){
+  const dd=document.getElementById('absen-dropdown');
+  if(!dd) return;
+  const items=dd.querySelectorAll('.absen-dd-item');
+  items.forEach(it=>it.classList.remove('focused'));
+  if(idx>=0&&idx<items.length){ items[idx].classList.add('focused'); _absenFocusIdx=idx; }
+}
+
+function selectAbsenItem(id){
+  const anggota = pubState._anggota || [];
+  const a = anggota.find(x=>x.id===id);
+  if(!a) return;
+
+  if(!pubState._selectedIds) pubState._selectedIds = new Set();
+  if(pubState._selectedIds.has(id)) return; // sudah ada
+  pubState._selectedIds.add(id);
+
+  // Tambahkan ke daftar
+  const list = document.getElementById('pub-ang-list');
+  if(list){
+    const div=document.createElement('div');
+    div.innerHTML=renderAbsenItem(a);
+    list.appendChild(div.firstElementChild);
+  }
+
+  // Clear input & tutup dropdown
+  const inp=document.getElementById('absen-search-input');
+  if(inp){ inp.value=''; inp.focus(); }
+  const dd=document.getElementById('absen-dropdown');
+  if(dd){ dd.classList.remove('show'); dd.innerHTML=''; }
+  _absenFocusIdx=-1;
+
+  updateAbsenCounter();
+}
+
+// Tutup dropdown saat klik di luar
+document.addEventListener('click', e=>{
+  const wrap=document.getElementById('absen-search-wrap');
+  if(wrap && !wrap.contains(e.target)){
+    const dd=document.getElementById('absen-dropdown');
+    if(dd) dd.classList.remove('show');
+  }
+});
+
+// Fungsi lama — tidak dipakai tapi tetap ada agar tidak error
+function filterPubAnggota(q){ /* replaced by handleAbsenSearch */ }
 
 
 // ╔══════════════════════════════════════════════╗
