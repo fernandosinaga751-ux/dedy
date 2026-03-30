@@ -269,8 +269,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 .pub-logo-wrap{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:10px}
 .lbox-logo-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
 
-/* PDF template (off-screen) */
-#pdf-tpl{position:fixed;top:-9999px;left:-9999px;width:650px;background:#fff;padding:44px;font-family:Georgia,serif;color:#1a1a1a;line-height:1.6}
+/* ── MODAL LAPORAN EDIT ─────────────────────── */
+.mo-lap-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mo-lap-full{grid-column:1/-1}
+.petugas-count{display:inline-block;font-size:10px;font-weight:700;background:var(--sidebar);color:var(--gold);border-radius:20px;padding:1px 8px;margin-left:6px;vertical-align:middle}
+
+/* ── JADWAL INPUT autocomplete hint ────────── */
+.jdw-hint{font-size:10.5px;color:var(--muted);margin-top:3px}
+.jdw-hint b{color:var(--accent)}
+
+/* ── TEMPLATE FOTO/PDF compact ──────────────── */
+#pdf-tpl{position:fixed;top:-9999px;left:-9999px;width:480px;background:#fff;padding:28px;font-family:Arial,sans-serif;color:#1a1a1a;line-height:1.5;font-size:11px}
 
 
 /* ── STM / BNU ──────────────────────────────── */
@@ -419,16 +428,82 @@ datalist option{font-size:13px}
       <div class="fg">
         <div class="fgi full"><label>Tanggal (Kamis) *</label><input type="date" id="ij-tgl"></div>
         <div class="fgi full"><label>Alamat Partonggoan</label><input type="text" id="ij-al" placeholder="Alamat lengkap tuan rumah"></div>
-        <div class="fgi full"><label>Namanjabui / Tuan Rumah</label><input type="text" id="ij-tr" placeholder="Nama tuan rumah"></div>
-        <div class="fgi full"><label>Pengkhotbah</label><input type="text" id="ij-pk" placeholder="Nama pengkhotbah"></div>
-        <div class="fgi full"><label>Sibasa Doding</label><input type="text" id="ij-sd" placeholder="Nama sibasa doding"></div>
-        <div class="fgi full"><label>Paragenda</label><input type="text" id="ij-pg" placeholder="Nama paragenda"></div>
+        <div class="fgi full"><label>Namanjabui / Tuan Rumah</label><input type="text" id="ij-tr" placeholder="Nama tuan rumah" list="dl-jdw-ang"></div>
+        <div class="fgi full">
+          <label>Pengkhotbah <span id="cnt-pk" class="petugas-count" style="display:none"></span></label>
+          <input type="text" id="ij-pk" placeholder="Nama pengkhotbah" list="dl-jdw-ang" oninput="updJdwCount()">
+          <div class="jdw-hint" id="hint-pk"></div>
+        </div>
+        <div class="fgi full">
+          <label>Sibasa Doding <span id="cnt-sd" class="petugas-count" style="display:none"></span></label>
+          <input type="text" id="ij-sd" placeholder="Nama sibasa doding" list="dl-jdw-ang" oninput="updJdwCount()">
+          <div class="jdw-hint" id="hint-sd"></div>
+        </div>
+        <div class="fgi full">
+          <label>Paragenda <span id="cnt-pg" class="petugas-count" style="display:none"></span></label>
+          <input type="text" id="ij-pg" placeholder="Nama paragenda" list="dl-jdw-ang" oninput="updJdwCount()">
+          <div class="jdw-hint" id="hint-pg"></div>
+        </div>
       </div>
+      <datalist id="dl-jdw-ang"></datalist>
       <input type="hidden" id="ij-id">
     </div>
     <div class="mf">
       <button class="btn btn-o" onclick="cMo('mo-jdw')">Batal</button>
       <button class="btn btn-p" onclick="saveJdw()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Edit Laporan ═══ -->
+<div class="mo" id="mo-lap">
+  <div class="modal" style="width:560px">
+    <div class="mh"><h3 id="mo-lap-t">Edit Laporan Partonggoan</h3><button class="mc" onclick="cMo('mo-lap')">✕</button></div>
+    <div class="mb">
+      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:var(--muted)">
+        <b id="ml-tgl" style="color:var(--text);font-size:13px"></b>
+        <span id="ml-alamat"></span>
+      </div>
+      <!-- Kehadiran -->
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">👥 Kehadiran</div>
+      <div class="mo-lap-grid" style="margin-bottom:14px">
+        <div class="fgi"><label>👨 Dalahi (Laki-laki)</label><input type="number" id="ml-hd" min="0" placeholder="0"></div>
+        <div class="fgi"><label>👩 Naboru (Perempuan)</label><input type="number" id="ml-hn" min="0" placeholder="0"></div>
+      </div>
+      <!-- Galangan -->
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">💰 Galangan (Persembahan)</div>
+      <div class="mo-lap-grid" style="margin-bottom:14px">
+        <div class="fgi"><label>Galangan 1</label>
+          <div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="ml-g1" placeholder="0" class="cur-inp" oninput="fmtCurInp(this);updMlTotal()"></div>
+        </div>
+        <div class="fgi"><label>Galangan 2</label>
+          <div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="ml-g2" placeholder="0" class="cur-inp" oninput="fmtCurInp(this);updMlTotal()"></div>
+        </div>
+        <div class="fgi mo-lap-full"><label>Galangan 3</label>
+          <div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="ml-g3" placeholder="0" class="cur-inp" oninput="fmtCurInp(this);updMlTotal()"></div>
+        </div>
+      </div>
+      <!-- STM -->
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">🏥 Sumbangan STM</div>
+      <div class="fgi" style="margin-bottom:14px">
+        <div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="ml-stm" placeholder="0" class="cur-inp" oninput="fmtCurInp(this);updMlTotal()"></div>
+      </div>
+      <!-- BNU -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">💝 Persembahan Bulanan / BNU</div>
+        <button class="btn btn-sm btn-g" onclick="addMlBNU()">➕ Tambah</button>
+      </div>
+      <div id="ml-bnu-list" style="margin-bottom:12px"></div>
+      <!-- Grand Total -->
+      <div style="background:var(--sidebar);color:var(--gold);border-radius:8px;padding:11px 15px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.5px">💰 GRAND TOTAL</div>
+        <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700" id="ml-grand">Rp 0</div>
+      </div>
+      <input type="hidden" id="ml-jid">
+    </div>
+    <div class="mf">
+      <button class="btn btn-o" onclick="cMo('mo-lap')">Batal</button>
+      <button class="btn btn-p" onclick="saveLapMo()">💾 Simpan</button>
     </div>
   </div>
 </div>
@@ -709,7 +784,7 @@ function renderPubForm(anggota, lap){
       ? '<p style="text-align:center;color:var(--muted);padding:18px 0">Belum ada data anggota. Tambahkan di menu Admin.</p>'
       : `
     <div class="absen-search-wrap" id="absen-search-wrap">
-      <span class="absen-search-icon"></span>
+      <span class="absen-search-icon">🔍</span>
       <input type="text" id="absen-search-input"
         placeholder="Ketik nama anggota..."
         autocomplete="off"
@@ -1285,22 +1360,58 @@ async function pgJdw(){
     </table>
   </div>`;
 }
-function oMoJdw(id=null){
+let _jdwAllCache = [], _jdwAnggtCache = [];
+async function oMoJdw(id=null){
   ['ij-tgl','ij-al','ij-tr','ij-pk','ij-sd','ij-pg','ij-id'].forEach(x=>document.getElementById(x).value='');
+  ['hint-pk','hint-sd','hint-pg'].forEach(x=>{ const el=document.getElementById(x); if(el) el.innerHTML=''; });
+  ['cnt-pk','cnt-sd','cnt-pg'].forEach(x=>{ const el=document.getElementById(x); if(el) el.style.display='none'; });
   document.getElementById('mo-jdw-t').textContent=id?'Edit Jadwal':'Tambah Jadwal';
+
+  // Load anggota untuk datalist
+  const [anggt, jdwAll] = await Promise.all([fsAll('anggota','ord',true), fsAll('jadwal','ord',true)]);
+  _jdwAnggtCache = anggt;
+  _jdwAllCache = jdwAll;
+  const dl = document.getElementById('dl-jdw-ang');
+  if(dl) dl.innerHTML = anggt.map(a=>`<option value="${a.nama}">`).join('');
+
   if(id){
-    fsAll('jadwal','ord',true).then(all=>{
-      const j=all.find(x=>x.id===id); if(!j)return;
-      document.getElementById('ij-id').value=j.id;
-      document.getElementById('ij-tgl').value=j.tanggal||'';
-      document.getElementById('ij-al').value=j.alamat||'';
-      document.getElementById('ij-tr').value=j.tuanRumah||'';
-      document.getElementById('ij-pk').value=j.pengkhotbah||'';
-      document.getElementById('ij-sd').value=j.sibasaDoding||'';
-      document.getElementById('ij-pg').value=j.paragenda||'';
-    });
+    const j=jdwAll.find(x=>x.id===id); if(!j)return;
+    document.getElementById('ij-id').value=j.id;
+    document.getElementById('ij-tgl').value=j.tanggal||'';
+    document.getElementById('ij-al').value=j.alamat||'';
+    document.getElementById('ij-tr').value=j.tuanRumah||'';
+    document.getElementById('ij-pk').value=j.pengkhotbah||'';
+    document.getElementById('ij-sd').value=j.sibasaDoding||'';
+    document.getElementById('ij-pg').value=j.paragenda||'';
+    updJdwCount();
   }
   oMo('mo-jdw');
+}
+
+function updJdwCount(){
+  const jdwAll = _jdwAllCache;
+  const curId = document.getElementById('ij-id').value;
+  const fields = [
+    { inp:'ij-pk', cnt:'cnt-pk', hint:'hint-pk', field:'pengkhotbah', label:'pengkhotbah' },
+    { inp:'ij-sd', cnt:'cnt-sd', hint:'hint-sd', field:'sibasaDoding', label:'sibasa doding' },
+    { inp:'ij-pg', cnt:'cnt-pg', hint:'hint-pg', field:'paragenda',    label:'paragenda' },
+  ];
+  fields.forEach(({inp, cnt, hint, field, label})=>{
+    const val = (document.getElementById(inp)?.value||'').trim().toLowerCase();
+    const cntEl = document.getElementById(cnt);
+    const hintEl = document.getElementById(hint);
+    if(!val){ if(cntEl) cntEl.style.display='none'; if(hintEl) hintEl.innerHTML=''; return; }
+    const count = jdwAll.filter(j => j.id !== curId && (j[field]||'').toLowerCase() === val).length;
+    if(cntEl){
+      cntEl.textContent = count + 'x bertugas';
+      cntEl.style.display = count>0 ? 'inline-block' : 'none';
+    }
+    if(hintEl){
+      hintEl.innerHTML = count > 0
+        ? `Sudah <b>${count}x</b> menjadi ${label} di tahun ini`
+        : `<b>Belum pernah</b> menjadi ${label} di tahun ini`;
+    }
+  });
 }
 async function saveJdw(){
   const tgl=document.getElementById('ij-tgl').value;
@@ -1464,9 +1575,9 @@ async function pgLap(){
           ${j.alamat?`<div style="font-size:12.5px;color:var(--muted);margin-top:3px">📍 ${j.alamat}</div>`:''}
         </div>
         <div class="lr-acts">
+          <button class="btn btn-sm btn-p" onclick="oMoLap('${j.id}')">✏️ Edit</button>
           <button class="btn btn-sm btn-s" onclick="expLapPDF('${j.id}')">📄 PDF</button>
           <button class="btn btn-sm btn-g" onclick="expLapPhoto('${j.id}')">📷 Foto</button>
-          <button class="btn btn-sm btn-p" onclick="saveLap('${j.id}')">💾 Simpan</button>
           <button class="btn btn-sm" style="background:#25D366;color:#fff" onclick="sendLapWA('${j.id}')">📲 WA</button>
         </div>
       </div>
@@ -1476,109 +1587,141 @@ async function pgLap(){
         <div class="lf"><div class="lfl">📖 Paragenda</div><div class="lfv">${j.paragenda||'-'}</div></div>
         <div class="lf"><div class="lfl">🎵 Sibasa Doding</div><div class="lfv">${j.sibasaDoding||'-'}</div></div>
       </div>
-
-      <!-- KEHADIRAN DALAHI / NABORU -->
-      <div class="lfl" style="margin-bottom:8px;margin-top:4px">👥 Jumlah Kehadiran</div>
-      <div class="kehadiran-row" style="margin-bottom:10px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
+        <div class="lf" style="text-align:center">
+          <div class="lfl">👨 Dalahi</div>
+          <div style="font-size:22px;font-weight:700;font-family:'Cinzel',serif;color:var(--accent)">${parseInt(hDalahi)||0}</div>
+        </div>
+        <div class="lf" style="text-align:center">
+          <div class="lfl">👩 Naboru</div>
+          <div style="font-size:22px;font-weight:700;font-family:'Cinzel',serif;color:var(--accent)">${parseInt(hNaboru)||0}</div>
+        </div>
+        <div class="lf" style="text-align:center;background:var(--sidebar)">
+          <div class="lfl" style="color:var(--gold)">👥 Total</div>
+          <div style="font-size:22px;font-weight:700;font-family:'Cinzel',serif;color:var(--gold)">${totalHdir||mH}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div class="lf">
-          <div class="lfl">👨 Dalahi (Laki-laki)</div>
-          <input type="number" id="lhd-${j.id}" value="${hDalahi}" placeholder="0" min="0"
-            style="border:none;font-size:22px;font-weight:700;color:#1a2a1a;width:80px;background:transparent;outline:none;padding:3px 0"
-            oninput="updTotalHadir('${j.id}')">
+          <div class="lfl">💰 Galangan</div>
+          <div class="lfv">${fmtRp(g1+g2+g3)}</div>
+          <div style="font-size:10.5px;color:var(--muted);margin-top:2px">G1: ${fmtRp(g1)} · G2: ${fmtRp(g2)} · G3: ${fmtRp(g3)}</div>
         </div>
         <div class="lf">
-          <div class="lfl">👩 Naboru (Perempuan)</div>
-          <input type="number" id="lhn-${j.id}" value="${hNaboru}" placeholder="0" min="0"
-            style="border:none;font-size:22px;font-weight:700;color:#1a2a1a;width:80px;background:transparent;outline:none;padding:3px 0"
-            oninput="updTotalHadir('${j.id}')">
+          <div class="lfl">💰 Grand Total</div>
+          <div class="lfv" style="color:var(--accent);font-family:'Cinzel',serif">${fmtRp(grandTotal)}</div>
+          ${stm>0?`<div style="font-size:10.5px;color:var(--muted);margin-top:2px">STM: ${fmtRp(stm)}</div>`:''}
         </div>
       </div>
-      <div class="hadir-total-box" style="margin-bottom:14px" id="htb-${j.id}">
-        <div class="ht-num" id="ht-num-${j.id}">${totalHdir||mH}</div>
-        <div class="ht-lbl">TOTAL HADIR (Dalahi + Naboru)</div>
-      </div>
-
-      <hr class="section-divider">
-
-      <!-- GALANGAN -->
-      <div>
-        <div class="lfl" style="margin-bottom:8px">💰 Galangan (Persembahan)</div>
-        <div class="gal-lap">
-          <div class="lf"><div class="lfl">Galangan 1</div><div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="lg1-${j.id}" value="${g1?numFmt(g1):''}" placeholder="0" oninput="fmtCurInp(this);updGrandTotal('${j.id}')" class="cur-inp"></div></div>
-          <div class="lf"><div class="lfl">Galangan 2</div><div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="lg2-${j.id}" value="${g2?numFmt(g2):''}" placeholder="0" oninput="fmtCurInp(this);updGrandTotal('${j.id}')" class="cur-inp"></div></div>
-          <div class="lf"><div class="lfl">Galangan 3</div><div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="lg3-${j.id}" value="${g3?numFmt(g3):''}" placeholder="0" oninput="fmtCurInp(this);updGrandTotal('${j.id}')" class="cur-inp"></div></div>
-        </div>
-      </div>
-
-      <hr class="section-divider">
-
-      <!-- STM -->
-      <div class="lf" style="margin-bottom:14px">
-        <div class="lfl">🏥 Sumbangan STM</div>
-        <div class="cur-box"><span class="cur-prefix">Rp</span>
-          <input type="text" id="lstm-${j.id}" value="${stm?numFmt(stm):''}" placeholder="0"
-            oninput="fmtCurInp(this);updGrandTotal('${j.id}')" class="cur-inp">
-        </div>
-      </div>
-
-      <hr class="section-divider">
-
-      <!-- BNU / PERSEMBAHAN BULANAN -->
-      <div style="margin-bottom:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="lfl">💝 Persembahan Bulanan / BNU</div>
-          <button class="btn btn-sm btn-g" onclick="addBNURow('${j.id}')">➕ Tambah</button>
-        </div>
-        <div id="bnu-list-${j.id}">${bnuRowsHtml}</div>
-        <div style="font-size:12.5px;color:var(--muted);margin-top:6px">
-          Total BNU: <b style="color:var(--accent)" id="bnu-total-${j.id}">Rp ${numFmt(totalBNU)}</b>
-        </div>
-      </div>
-
-      <hr class="section-divider">
-
-      <!-- GRAND TOTAL -->
-      <div style="background:var(--sidebar);color:var(--gold);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
-        <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:.5px">💰 GRAND TOTAL SEMUA PERSEMBAHAN</div>
-        <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700" id="grand-total-${j.id}">Rp ${numFmt(grandTotal)}</div>
-      </div>
+      ${bnuArr.length>0?`<div class="lf" style="margin-top:8px"><div class="lfl">💝 BNU (${bnuArr.length} item)</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">${bnuArr.map(b=>`${b.nama||'-'}: ${fmtRp(b.nilai)}`).join(' · ')}</div>
+      </div>`:''}
     </div>`;
   }).join('');
   return html;
 }
-async function saveLap(jadwalId){
-  const g1=parseRp(document.getElementById('lg1-'+jadwalId)?.value)||0;
-  const g2=parseRp(document.getElementById('lg2-'+jadwalId)?.value)||0;
-  const g3=parseRp(document.getElementById('lg3-'+jadwalId)?.value)||0;
-  const hDalahi=parseInt(document.getElementById('lhd-'+jadwalId)?.value)||0;
-  const hNaboru=parseInt(document.getElementById('lhn-'+jadwalId)?.value)||0;
-  const jH=hDalahi+hNaboru;
-  const stm=parseRp(document.getElementById('lstm-'+jadwalId)?.value)||0;
+// ── MODAL LAPORAN EDIT ────────────────────────
+async function oMoLap(jadwalId){
+  const [jdwAll,lapAll,anggt]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('anggota','ord',true)]);
+  const j=jdwAll.find(x=>x.id===jadwalId); if(!j)return;
+  const lap=lapAll.find(l=>l.jadwalId===jadwalId)||{};
 
-  // Collect BNU rows
-  const bnuArr=[];
-  let bi=0;
-  while(document.getElementById('bnu-nm-'+jadwalId+'-'+bi)!==null){
-    const nm=document.getElementById('bnu-nm-'+jadwalId+'-'+bi).value.trim();
-    const tj=document.getElementById('bnu-tj-'+jadwalId+'-'+bi)?.value.trim()||'';
-    const vl=parseRp(document.getElementById('bnu-vl-'+jadwalId+'-'+bi)?.value)||0;
-    if(nm||vl) bnuArr.push({nama:nm, tujuan:tj, nilai:vl});
-    bi++;
+  document.getElementById('ml-jid').value=jadwalId;
+  document.getElementById('ml-tgl').textContent=fmtD(j.tanggal)+' — ⏰ '+JAM;
+  document.getElementById('ml-alamat').innerHTML=j.alamat?` &nbsp;·&nbsp; 📍 ${j.alamat}`:'';
+  document.getElementById('ml-hd').value=lap.hadirDalahi||'';
+  document.getElementById('ml-hn').value=lap.hadirNaboru||'';
+  document.getElementById('ml-g1').value=lap.galangan1?numFmt(lap.galangan1):'';
+  document.getElementById('ml-g2').value=lap.galangan2?numFmt(lap.galangan2):'';
+  document.getElementById('ml-g3').value=lap.galangan3?numFmt(lap.galangan3):'';
+  document.getElementById('ml-stm').value=lap.stm?numFmt(lap.stm):'';
+  document.getElementById('mo-lap-t').textContent='Edit Laporan — '+fmtD(j.tanggal);
+
+  // BNU list
+  const bnuArr=Array.isArray(lap.bnu)?lap.bnu:[];
+  const angNama=anggt.map(a=>a.nama);
+  const bList=document.getElementById('ml-bnu-list');
+  let dlHtml=document.getElementById('dl-anggota-lap-mo');
+  if(!dlHtml){ const dl=document.createElement('datalist'); dl.id='dl-anggota-lap-mo'; document.body.appendChild(dl); dlHtml=dl; }
+  dlHtml.innerHTML=angNama.map(n=>`<option value="${n}">`).join('');
+  bList.innerHTML=bnuArr.length===0
+    ? '<p id="ml-bnu-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>'
+    : bnuArr.map((b,i)=>mlBnuRowHtml(i,b.nama,b.tujuan,b.nilai)).join('');
+
+  updMlTotal();
+  oMo('mo-lap');
+}
+
+function mlBnuRowHtml(i, nm='', tj='', vl=''){
+  return `<div class="bnu-row" id="ml-bnu-row-${i}">
+    <input type="text" placeholder="Nama" value="${nm||''}" list="dl-anggota-lap-mo" id="ml-bnu-nm-${i}" oninput="updMlTotal()" style="border:none;outline:none;font-size:13px;padding:4px 0;background:transparent;width:100%">
+    <input type="text" placeholder="Tujuan" value="${tj||''}" id="ml-bnu-tj-${i}" style="border:none;outline:none;font-size:12px;padding:4px 0;background:transparent;width:100%;color:var(--muted)">
+    <div style="display:flex;gap:6px;align-items:center">
+      <div class="cur-box" style="min-width:120px"><span class="cur-prefix">Rp</span>
+        <input type="text" placeholder="0" value="${vl?numFmt(vl):''}" id="ml-bnu-vl-${i}" class="cur-inp" oninput="fmtCurInp(this);updMlTotal()">
+      </div>
+      <button class="bnu-del" onclick="delMlBNU(${i})">✕</button>
+    </div>
+  </div>`;
+}
+
+function addMlBNU(){
+  const list=document.getElementById('ml-bnu-list');
+  const empty=document.getElementById('ml-bnu-empty');
+  if(empty) empty.remove();
+  let i=0; while(document.getElementById('ml-bnu-nm-'+i)!==null) i++;
+  const div=document.createElement('div');
+  div.innerHTML=mlBnuRowHtml(i);
+  list.appendChild(div.firstElementChild);
+}
+function delMlBNU(i){
+  const row=document.getElementById('ml-bnu-row-'+i); if(row) row.remove();
+  const list=document.getElementById('ml-bnu-list');
+  if(list&&list.children.length===0) list.innerHTML='<p id="ml-bnu-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>';
+  updMlTotal();
+}
+function updMlTotal(){
+  const g1=parseRp(document.getElementById('ml-g1')?.value)||0;
+  const g2=parseRp(document.getElementById('ml-g2')?.value)||0;
+  const g3=parseRp(document.getElementById('ml-g3')?.value)||0;
+  const stm=parseRp(document.getElementById('ml-stm')?.value)||0;
+  let bnu=0,i=0;
+  while(document.getElementById('ml-bnu-vl-'+i)!==null){ bnu+=parseRp(document.getElementById('ml-bnu-vl-'+i).value)||0; i++; }
+  const grand=g1+g2+g3+stm+bnu;
+  const el=document.getElementById('ml-grand'); if(el) el.textContent='Rp '+numFmt(grand);
+}
+
+async function saveLapMo(){
+  const jadwalId=document.getElementById('ml-jid').value;
+  const g1=parseRp(document.getElementById('ml-g1')?.value)||0;
+  const g2=parseRp(document.getElementById('ml-g2')?.value)||0;
+  const g3=parseRp(document.getElementById('ml-g3')?.value)||0;
+  const stm=parseRp(document.getElementById('ml-stm')?.value)||0;
+  const hDalahi=parseInt(document.getElementById('ml-hd')?.value)||0;
+  const hNaboru=parseInt(document.getElementById('ml-hn')?.value)||0;
+  const bnuArr=[]; let i=0;
+  while(document.getElementById('ml-bnu-nm-'+i)!==null){
+    const nm=document.getElementById('ml-bnu-nm-'+i).value.trim();
+    const tj=document.getElementById('ml-bnu-tj-'+i)?.value.trim()||'';
+    const vl=parseRp(document.getElementById('ml-bnu-vl-'+i)?.value)||0;
+    if(nm||vl) bnuArr.push({nama:nm,tujuan:tj,nilai:vl});
+    i++;
   }
-
   const lapAll=await fsAll('laporan','ord',true);
   const jdwAll=await fsAll('jadwal','ord',true);
   const jdw=jdwAll.find(j=>j.id===jadwalId);
   const ex=lapAll.find(l=>l.jadwalId===jadwalId);
-  const data={jadwalId, tanggal:jdw?.tanggal||'', jumlahHadir:jH,
-    hadirDalahi:hDalahi, hadirNaboru:hNaboru,
-    galangan1:g1, galangan2:g2, galangan3:g3,
-    stm:stm, bnu:bnuArr, ord:Date.now()};
+  const data={jadwalId,tanggal:jdw?.tanggal||'',jumlahHadir:hDalahi+hNaboru,
+    hadirDalahi:hDalahi,hadirNaboru:hNaboru,
+    galangan1:g1,galangan2:g2,galangan3:g3,stm,bnu:bnuArr,ord:Date.now()};
   if(ex) await fsUpd('laporan',ex.id,data);
   else await fsAdd('laporan',data);
-  alert('✅ Laporan berhasil disimpan!');
+  cMo('mo-lap');
   renderPage('laporan');
 }
+
+// Fungsi lama (dipertahankan agar tidak error jika masih ada referensi)
+async function saveLap(jadwalId){ await oMoLap(jadwalId); }
 async function delLap(jadwalId){
   if(!confirm('Hapus laporan ini?'))return;
   const lapAll=await fsAll('laporan','ord',true);
@@ -1735,35 +1878,26 @@ async function expLapXLS(){
 // ╚══════════════════════════════════════════════╝
 function buildTplJdw(j, pg){
   pg = pg || {};
-  return `<div>
-    <div style="text-align:center;padding-bottom:18px;margin-bottom:22px;border-bottom:2px solid #1a2a1a">
-      <img src="${LOGO_GKPS_CIRCLE}" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 10px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15))" alt="GKPS">
-      <div style="font-size:22px;font-weight:bold;font-family:'Cinzel',serif,Georgia">JADWAL PARTONGGOAN</div>
-      <div style="font-size:14px;color:#555;margin-top:4px">GKPS Krakatau Sektor 4 — Tahun 2026</div>
+  const rows=[['Tanggal',fmtD(j.tanggal)],['Jam',JAM],['Alamat',j.alamat||'-'],['Namanjabui / Tuan Rumah',j.tuanRumah||'-'],['Pengkhotbah',j.pengkhotbah||'-'],['Paragenda',j.paragenda||'-'],['Sibasa Doding',j.sibasaDoding||'-']];
+  return `<div style="font-family:Arial,sans-serif;color:#1a1a1a;font-size:11px;line-height:1.4">
+    <div style="text-align:center;padding-bottom:10px;margin-bottom:12px;border-bottom:2px solid #1a2a1a">
+      <img src="${LOGO_GKPS_CIRCLE}" style="width:52px;height:52px;object-fit:contain;display:block;margin:0 auto 6px" alt="GKPS">
+      <div style="font-size:13px;font-weight:bold;font-family:Georgia,serif;letter-spacing:1px">JADWAL PARTONGGOAN</div>
+      <div style="font-size:10px;color:#555;margin-top:2px">GKPS Krakatau Sektor 4 — Tahun 2026</div>
     </div>
-    <table style="width:100%;border-collapse:collapse;font-size:14px">
-      ${[['📅 Tanggal',fmtD(j.tanggal)],['⏰ Jam',JAM],['📍 Alamat',j.alamat||'-'],['🏠 Namanjabui / Tuan Rumah',j.tuanRumah||'-'],['✝ Pengkhotbah',j.pengkhotbah||'-'],['📖 Paragenda',j.paragenda||'-'],['🎵 Sibasa Doding',j.sibasaDoding||'-']].map(([k,v],i)=>`
-        <tr style="background:${i%2===0?'#f8f5ee':'#fff'}">
-          <td style="padding:12px 14px;border:1px solid #ddd;font-weight:bold;width:42%;color:#1a2a1a">${k}</td>
-          <td style="padding:12px 14px;border:1px solid #ddd;color:#2c1f0e">${v}</td>
-        </tr>`).join('')}
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      ${rows.map(([k,v],i)=>`<tr style="background:${i%2===0?'#f5f0e8':'#fff'}">
+        <td style="padding:7px 10px;border:1px solid #ddd;font-weight:bold;width:40%;color:#1a2a1a">${k}</td>
+        <td style="padding:7px 10px;border:1px solid #ddd;color:#2c1f0e">${v}</td>
+      </tr>`).join('')}
     </table>
     ${(pg.ketua||pg.sekretaris||pg.bendahara)?`
-    <div style="margin-top:24px;border-top:2px solid #1a2a1a;padding-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
-      <div>
-        <div style="font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;margin-bottom:6px;letter-spacing:.5px">Ketua</div>
-        <div style="font-size:16px;font-weight:bold;color:#1a2a1a">${pg.ketua||'-'}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;margin-bottom:6px;letter-spacing:.5px">Sekretaris</div>
-        <div style="font-size:16px;font-weight:bold;color:#1a2a1a">${pg.sekretaris||'-'}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;margin-bottom:6px;letter-spacing:.5px">Bendahara</div>
-        <div style="font-size:16px;font-weight:bold;color:#1a2a1a">${pg.bendahara||'-'}</div>
-      </div>
+    <div style="margin-top:14px;border-top:1px solid #1a2a1a;padding-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+      ${pg.ketua?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:3px">Ketua</div><div style="font-size:11px;font-weight:bold">${pg.ketua}</div></div>`:'<div></div>'}
+      ${pg.sekretaris?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:3px">Sekretaris</div><div style="font-size:11px;font-weight:bold">${pg.sekretaris}</div></div>`:'<div></div>'}
+      ${pg.bendahara?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:3px">Bendahara</div><div style="font-size:11px;font-weight:bold">${pg.bendahara}</div></div>`:'<div></div>'}
     </div>`:''}
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px">Partonggoan GKPS Krakatau Sektor 4 • ${fmtD(j.tanggal)}</div>
+    <div style="text-align:center;margin-top:8px;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:6px">Partonggoan GKPS Krakatau Sektor 4 · ${fmtD(j.tanggal)}</div>
   </div>`;
 }
 function buildTplLap(j, lap, hC, pg){
@@ -1777,138 +1911,95 @@ function buildTplLap(j, lap, hC, pg){
   const totalBNU=bnuArr.reduce((s,b)=>s+(parseInt(b.nilai)||0),0);
   const grandTotal=g1+g2+g3+stm+totalBNU;
 
-  const bnuRows=bnuArr.length>0?bnuArr.map((b,i)=>`
-    <tr style="background:${i%2===0?'#f8f5ee':'#fff'}">
-      <td style="padding:9px 13px;border:1px solid #ddd;color:#2c1f0e">${b.nama||'-'}</td>
-      <td style="padding:9px 13px;border:1px solid #ddd;color:#555">${b.tujuan||'-'}</td>
-      <td style="padding:9px 13px;border:1px solid #ddd;font-weight:600;color:#8B6914">${fmtRp(b.nilai)}</td>
-    </tr>`).join(''):'<tr><td colspan="3" style="padding:9px 13px;border:1px solid #ddd;color:#aaa;font-style:italic">Tidak ada</td></tr>';
+  const infoRows=[['Tanggal',fmtD(j.tanggal)],['Jam',JAM],['Alamat',j.alamat||'-'],['Namanjabui',j.tuanRumah||'-'],['Pengkhotbah',j.pengkhotbah||'-'],['Paragenda',j.paragenda||'-'],['Sibasa Doding',j.sibasaDoding||'-']];
 
-  return `<div>
-    <div style="text-align:center;padding-bottom:18px;margin-bottom:22px;border-bottom:2px solid #1a2a1a">
-      <img src="${LOGO_GKPS_CIRCLE}" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 10px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15))" alt="GKPS">
-      <div style="font-size:22px;font-weight:bold;font-family:'Cinzel',serif,Georgia">LAPORAN PARTONGGOAN</div>
-      <div style="font-size:14px;color:#555;margin-top:4px">GKPS Krakatau Sektor 4</div>
+  return `<div style="font-family:Arial,sans-serif;color:#1a1a1a;font-size:11px;line-height:1.4">
+    <div style="text-align:center;padding-bottom:10px;margin-bottom:12px;border-bottom:2px solid #1a2a1a">
+      <img src="${LOGO_GKPS_CIRCLE}" style="width:48px;height:48px;object-fit:contain;display:block;margin:0 auto 5px" alt="GKPS">
+      <div style="font-size:13px;font-weight:bold;font-family:Georgia,serif;letter-spacing:1px">LAPORAN PARTONGGOAN</div>
+      <div style="font-size:10px;color:#555;margin-top:2px">GKPS Krakatau Sektor 4</div>
     </div>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:14px">
-      ${[['📅 Tanggal',fmtD(j.tanggal)],['⏰ Jam',JAM],['📍 Alamat',j.alamat||'-'],
-        ['🏠 Namanjabui / Tuan Rumah',j.tuanRumah||'-'],['✝ Pengkhotbah',j.pengkhotbah||'-'],
-        ['📖 Paragenda',j.paragenda||'-'],['🎵 Sibasa Doding',j.sibasaDoding||'-']].map(([k,v],i)=>`
-        <tr style="background:${i%2===0?'#f8f5ee':'#fff'}">
-          <td style="padding:11px 13px;border:1px solid #ddd;font-weight:bold;width:42%;color:#1a2a1a">${k}</td>
-          <td style="padding:11px 13px;border:1px solid #ddd;color:#2c1f0e">${v}</td>
-        </tr>`).join('')}
+
+    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+      ${infoRows.map(([k,v],i)=>`<tr style="background:${i%2===0?'#f5f0e8':'#fff'}">
+        <td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold;width:38%;color:#1a2a1a">${k}</td>
+        <td style="padding:6px 9px;border:1px solid #ddd">${v}</td>
+      </tr>`).join('')}
     </table>
 
-    <!-- KEHADIRAN -->
-    <div style="margin-bottom:14px;border:1px solid #ddd;border-radius:6px;overflow:hidden">
-      <div style="background:#1a2a1a;color:#d4a843;padding:9px 13px;font-weight:bold;font-size:13px">👥 KEHADIRAN</div>
-      <table style="width:100%;border-collapse:collapse;font-size:14px">
-        <tr style="background:#f8f5ee">
-          <td style="padding:10px 13px;border:1px solid #ddd;font-weight:bold;width:42%;color:#1a2a1a">👨 Dalahi (Laki-laki)</td>
-          <td style="padding:10px 13px;border:1px solid #ddd;color:#2c1f0e">${hDalahi} orang</td>
-        </tr>
-        <tr style="background:#fff">
-          <td style="padding:10px 13px;border:1px solid #ddd;font-weight:bold;color:#1a2a1a">👩 Naboru (Perempuan)</td>
-          <td style="padding:10px 13px;border:1px solid #ddd;color:#2c1f0e">${hNaboru} orang</td>
-        </tr>
-        <tr style="background:#e8f5e9">
-          <td style="padding:11px 13px;border:1px solid #ddd;font-weight:bold;color:#1a2a1a">👥 TOTAL HADIR</td>
-          <td style="padding:11px 13px;border:1px solid #ddd;font-weight:bold;font-size:18px;color:#8B6914">${mH} orang</td>
-        </tr>
-      </table>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;text-align:center">
+      <div style="border:1px solid #ddd;border-radius:4px;padding:7px 4px;background:#f5f0e8">
+        <div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:2px">Dalahi</div>
+        <div style="font-size:16px;font-weight:bold;color:#1a2a1a">${hDalahi}</div>
+      </div>
+      <div style="border:1px solid #ddd;border-radius:4px;padding:7px 4px;background:#f5f0e8">
+        <div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:2px">Naboru</div>
+        <div style="font-size:16px;font-weight:bold;color:#1a2a1a">${hNaboru}</div>
+      </div>
+      <div style="border:1px solid #1a2a1a;border-radius:4px;padding:7px 4px;background:#1a2a1a;color:#d4a843;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;margin-bottom:2px;opacity:.8">Total Hadir</div>
+        <div style="font-size:16px;font-weight:bold">${mH}</div>
+      </div>
     </div>
 
-    <!-- GALANGAN -->
-    <div style="margin-bottom:14px;border:1px solid #ddd;border-radius:6px;overflow:hidden">
-      <div style="background:#1a2a1a;color:#d4a843;padding:9px 13px;font-weight:bold;font-size:13px">💰 GALANGAN (PERSEMBAHAN)</div>
-      <table style="width:100%;border-collapse:collapse;font-size:14px">
-        ${[['💰 Galangan 1',fmtRp(g1)],['💰 Galangan 2',fmtRp(g2)],['💰 Galangan 3',fmtRp(g3)]].map(([k,v],i)=>`
-        <tr style="background:${i%2===0?'#f8f5ee':'#fff'}">
-          <td style="padding:10px 13px;border:1px solid #ddd;font-weight:bold;width:42%;color:#1a2a1a">${k}</td>
-          <td style="padding:10px 13px;border:1px solid #ddd;color:#2c1f0e">${v}</td>
-        </tr>`).join('')}
-        <tr style="background:#fff3cd">
-          <td style="padding:11px 13px;border:1px solid #ddd;font-weight:bold;color:#1a2a1a">Total Galangan</td>
-          <td style="padding:11px 13px;border:1px solid #ddd;font-weight:bold;font-size:16px;color:#8B6914">${fmtRp(g1+g2+g3)}</td>
-        </tr>
-      </table>
-    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+      <tr style="background:#1a2a1a;color:#d4a843"><td colspan="2" style="padding:5px 9px;font-weight:bold;font-size:10px">GALANGAN (PERSEMBAHAN)</td></tr>
+      ${[['Galangan 1',fmtRp(g1)],['Galangan 2',fmtRp(g2)],['Galangan 3',fmtRp(g3)],['Total Galangan',fmtRp(g1+g2+g3)]].map(([k,v],i)=>`
+      <tr style="background:${i===3?'#fff3cd':i%2===0?'#f5f0e8':'#fff'}">
+        <td style="padding:6px 9px;border:1px solid #ddd;font-weight:${i===3?'bold':'normal'};width:50%">${k}</td>
+        <td style="padding:6px 9px;border:1px solid #ddd;font-weight:${i===3?'bold':'normal'}">${v}</td>
+      </tr>`).join('')}
+      ${stm>0?`<tr style="background:#f5f0e8"><td style="padding:6px 9px;border:1px solid #ddd">STM</td><td style="padding:6px 9px;border:1px solid #ddd">${fmtRp(stm)}</td></tr>`:''}
+    </table>
 
-    <!-- STM -->
-    ${stm>0?`<div style="margin-bottom:14px;border:1px solid #ddd;border-radius:6px;overflow:hidden">
-      <div style="background:#1a2a1a;color:#d4a843;padding:9px 13px;font-weight:bold;font-size:13px">🏥 SUMBANGAN STM</div>
-      <table style="width:100%;border-collapse:collapse;font-size:14px">
-        <tr style="background:#f8f5ee">
-          <td style="padding:11px 13px;border:1px solid #ddd;font-weight:bold;width:42%;color:#1a2a1a">Sumbangan STM</td>
-          <td style="padding:11px 13px;border:1px solid #ddd;font-weight:bold;font-size:16px;color:#8B6914">${fmtRp(stm)}</td>
-        </tr>
-      </table>
-    </div>`:''}
+    ${bnuArr.length>0?`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+      <tr style="background:#1a2a1a;color:#d4a843"><td colspan="2" style="padding:5px 9px;font-weight:bold;font-size:10px">PERSEMBAHAN BULANAN / BNU</td></tr>
+      ${bnuArr.map((b,i)=>`<tr style="background:${i%2===0?'#f5f0e8':'#fff'}">
+        <td style="padding:6px 9px;border:1px solid #ddd">${b.nama||'-'}${b.tujuan?` (${b.tujuan})`:''}</td>
+        <td style="padding:6px 9px;border:1px solid #ddd">${fmtRp(b.nilai)}</td>
+      </tr>`).join('')}
+      <tr style="background:#fff3cd"><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">Total BNU</td><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">${fmtRp(totalBNU)}</td></tr>
+    </table>`:''}
 
-    <!-- BNU -->
-    ${bnuArr.length>0?`<div style="margin-bottom:14px;border:1px solid #ddd;border-radius:6px;overflow:hidden">
-      <div style="background:#1a2a1a;color:#d4a843;padding:9px 13px;font-weight:bold;font-size:13px">💝 PERSEMBAHAN BULANAN / BNU</div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead>
-          <tr style="background:#243824;color:#d4a843">
-            <th style="padding:8px 13px;text-align:left;border:1px solid #ddd;font-size:11px">Nama</th>
-            <th style="padding:8px 13px;text-align:left;border:1px solid #ddd;font-size:11px">Tujuan</th>
-            <th style="padding:8px 13px;text-align:left;border:1px solid #ddd;font-size:11px">Nilai</th>
-          </tr>
-        </thead>
-        <tbody>${bnuRows}</tbody>
-        <tr style="background:#fff3cd">
-          <td colspan="2" style="padding:10px 13px;border:1px solid #ddd;font-weight:bold;color:#1a2a1a">Total BNU</td>
-          <td style="padding:10px 13px;border:1px solid #ddd;font-weight:bold;font-size:15px;color:#8B6914">${fmtRp(totalBNU)}</td>
-        </tr>
-      </table>
-    </div>`:''}
-
-    <!-- GRAND TOTAL -->
-    <div style="background:#1a2a1a;color:#d4a843;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <div style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:.5px;font-weight:bold">💰 GRAND TOTAL SEMUA PERSEMBAHAN</div>
-      <div style="font-family:'Cinzel',serif;font-size:20px;font-weight:bold">${fmtRp(grandTotal)}</div>
+    <div style="background:#1a2a1a;color:#d4a843;border-radius:5px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:bold;letter-spacing:.5px">GRAND TOTAL</div>
+      <div style="font-size:14px;font-weight:bold">${fmtRp(grandTotal)}</div>
     </div>
 
     ${(pg.ketua||pg.sekretaris||pg.bendahara)?`
-    <div style="margin-top:24px;border-top:2px solid #1a2a1a;padding-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
-      <div>
-        <div style="font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;margin-bottom:6px;letter-spacing:.5px">Ketua</div>
-        <div style="font-size:16px;font-weight:bold;color:#1a2a1a">${pg.ketua||'-'}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;margin-bottom:6px;letter-spacing:.5px">Sekretaris</div>
-        <div style="font-size:16px;font-weight:bold;color:#1a2a1a">${pg.sekretaris||'-'}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:bold;color:#555;text-transform:uppercase;margin-bottom:6px;letter-spacing:.5px">Bendahara</div>
-        <div style="font-size:16px;font-weight:bold;color:#1a2a1a">${pg.bendahara||'-'}</div>
-      </div>
+    <div style="border-top:1px solid #1a2a1a;padding-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
+      ${pg.ketua?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:2px">Ketua</div><div style="font-size:10px;font-weight:bold">${pg.ketua}</div></div>`:'<div></div>'}
+      ${pg.sekretaris?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:2px">Sekretaris</div><div style="font-size:10px;font-weight:bold">${pg.sekretaris}</div></div>`:'<div></div>'}
+      ${pg.bendahara?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:2px">Bendahara</div><div style="font-size:10px;font-weight:bold">${pg.bendahara}</div></div>`:'<div></div>'}
     </div>`:''}
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px">Partonggoan GKPS Krakatau Sektor 4 • ${fmtD(j.tanggal)}</div>
+    <div style="text-align:center;margin-top:6px;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:5px">Partonggoan GKPS Krakatau Sektor 4 · ${fmtD(j.tanggal)}</div>
   </div>`;
 }
 async function captureAndExport(html, filename, asPDF){
   const tpl=document.getElementById('pdf-tpl');
   document.getElementById('pdf-cnt').innerHTML=html;
-  tpl.style.cssText='position:fixed;top:40px;left:50%;transform:translateX(-50%);width:650px;background:#fff;padding:44px;z-index:99999;border:1px solid #ddd;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.3)';
-  await new Promise(r=>setTimeout(r,400));
+  tpl.style.cssText='position:fixed;top:40px;left:50%;transform:translateX(-50%);width:480px;background:#fff;padding:28px;z-index:99999;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.2);font-size:11px';
+  await new Promise(r=>setTimeout(r,350));
   try {
-    const canvas=await html2canvas(document.getElementById('pdf-cnt'),{scale:2,useCORS:true,backgroundColor:'#fff'});
-    tpl.style.cssText='position:fixed;top:-9999px;left:-9999px;width:650px;background:#fff;padding:44px;';
+    const scale = asPDF ? 1.5 : 1.8;
+    const canvas=await html2canvas(document.getElementById('pdf-cnt'),{scale,useCORS:true,backgroundColor:'#fff'});
+    tpl.style.cssText='position:fixed;top:-9999px;left:-9999px;width:480px;background:#fff;padding:28px;font-size:11px';
     if(asPDF){
       const {jsPDF}=window.jspdf;
+      const pw=180; // mm, sedikit lebih kecil dari A4 (210)
+      const ph=canvas.height*pw/canvas.width;
       const pdf=new jsPDF('p','mm','a4');
-      const imgH=canvas.height*210/canvas.width;
-      pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,210,Math.min(imgH,297));
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.88),'JPEG',15,10,pw,Math.min(ph,270));
       pdf.save(filename+'.pdf');
     } else {
+      // foto: JPEG untuk ukuran file lebih kecil
       const a=document.createElement('a');
-      a.download=filename+'.png'; a.href=canvas.toDataURL('image/png'); a.click();
+      a.download=filename+'.jpg';
+      a.href=canvas.toDataURL('image/jpeg',0.85);
+      a.click();
     }
   } catch(e){
-    tpl.style.cssText='position:fixed;top:-9999px;left:-9999px;width:650px;background:#fff;padding:44px;';
+    tpl.style.cssText='position:fixed;top:-9999px;left:-9999px;width:480px;background:#fff;padding:28px;font-size:11px';
     alert('Gagal export: '+e.message);
   }
 }
