@@ -38,6 +38,14 @@ a{text-decoration:none}
 .ji .jil{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
 .ji .jiv{font-size:13.5px;font-weight:600}
 
+/* Search filter anggota */
+.pub-search-wrap{position:relative;margin-bottom:13px}
+.pub-search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff;outline:none;color:var(--text);transition:border .2s;box-sizing:border-box}
+.pub-search-wrap input:focus{border-color:var(--gold)}
+.pub-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
+.pub-search-count{font-size:11.5px;color:var(--muted);margin-top:5px;text-align:right}
+.a-item.hidden-by-filter{display:none!important}
+
 /* Anggota absen item */
 .a-item{display:flex;align-items:center;justify-content:space-between;padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:7px;background:#fff;transition:border .2s}
 .a-item:hover{border-color:var(--gold)}
@@ -648,6 +656,15 @@ function renderPubForm(anggota, lap){
   const angNama=anggota.map(a=>a.nama);
   return `<div class="pub-card">
     <h3>✅ Absen Kehadiran Anggota</h3>
+    ${anggota.length>0?`
+    <div class="pub-search-wrap">
+      <span class="pub-search-icon">🔍</span>
+      <input type="text" id="pub-search-input" placeholder="Cari nama anggota..." autocomplete="off"
+        oninput="filterPubAnggota(this.value)"
+        list="dl-anggota-pub-search">
+      <datalist id="dl-anggota-pub-search">${anggota.map(a=>'<option value="'+a.nama+'">').join('')}</datalist>
+    </div>
+    <div class="pub-search-count" id="pub-search-count">${anggota.length} anggota</div>`:''}
     <div id="pub-ang-list">
       ${anggota.length===0
         ? '<p style="text-align:center;color:var(--muted);padding:18px 0">Belum ada data anggota. Tambahkan di menu Admin.</p>'
@@ -718,6 +735,31 @@ function setAbs(id, val){
   const bT=document.getElementById('btn-t-'+id);
   if(bH){ bH.className='tbtn'+(val===true?' on-h':''); }
   if(bT){ bT.className='tbtn'+(val===false?' on-t':''); }
+}
+
+function filterPubAnggota(q){
+  const items=document.querySelectorAll('#pub-ang-list .a-item');
+  const keyword=(q||'').trim().toLowerCase();
+  let visible=0;
+  items.forEach(item=>{
+    const nameEl=item.querySelector('.an');
+    if(!nameEl){visible++;return;}
+    const name=nameEl.textContent.replace(/^\d+\.\s*/,'').toLowerCase();
+    if(!keyword||name.includes(keyword)){
+      item.classList.remove('hidden-by-filter');
+      visible++;
+    } else {
+      item.classList.add('hidden-by-filter');
+    }
+  });
+  const countEl=document.getElementById('pub-search-count');
+  if(countEl){
+    if(keyword){
+      countEl.textContent=visible+' dari '+items.length+' anggota';
+    } else {
+      countEl.textContent=items.length+' anggota';
+    }
+  }
 }
 
 
