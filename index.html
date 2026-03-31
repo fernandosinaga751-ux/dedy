@@ -495,12 +495,6 @@ datalist option{font-size:13px}
       <div class="fgi" style="margin-bottom:14px">
         <div class="cur-box"><span class="cur-prefix">Rp</span><input type="text" id="ml-stm" placeholder="0" class="cur-inp" oninput="fmtCurInp(this);updMlTotal()"></div>
       </div>
-      <!-- BNU -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">💝 Persembahan Bulanan / BNU</div>
-        <button class="btn btn-sm btn-g" onclick="addMlBNU()">➕ Tambah</button>
-      </div>
-      <div id="ml-bnu-list" style="margin-bottom:12px"></div>
       <!-- Persembahan Bulanan Publik -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">💰 Persembahan Bulanan (dari Publik)</div>
@@ -1203,9 +1197,10 @@ async function submitPubPB(){
         const jml = parseInt(document.getElementById('pub-pb-jml-'+i)?.value)||1;
         const vl = parseRp(document.getElementById('pub-pb-vl-'+i)?.value)||0;
         if(vl <= 0){ i++; continue; }
+        const nilaiPerBulan = Math.round(vl / jml);
         for(let x=0;x<jml;x++){
           const bln = ((blMulai-1+x)%12)+1;
-          rows.push({nama:nm, jenis:'Persembahan Bulanan', bulan:bln, nilai:vl, tujuan:'', tahun:2026, jadwalId, tanggalJadwal});
+          rows.push({nama:nm, jenis:'Persembahan Bulanan', bulan:bln, nilai:nilaiPerBulan, tujuan:'', tahun:2026, jadwalId, tanggalJadwal});
         }
       } else {
         // BNU
@@ -1912,16 +1907,11 @@ async function oMoLap(jadwalId){
   document.getElementById('ml-stm').value=lap.stm?numFmt(lap.stm):'';
   document.getElementById('mo-lap-t').textContent='Edit Laporan — '+fmtD(j.tanggal);
 
-  // BNU admin list
-  const bnuArr=Array.isArray(lap.bnu)?lap.bnu:[];
+  // Datalist nama anggota untuk autocomplete
   const angNama=anggt.map(a=>a.nama);
-  const bList=document.getElementById('ml-bnu-list');
   let dlHtml=document.getElementById('dl-anggota-lap-mo');
   if(!dlHtml){ const dl=document.createElement('datalist'); dl.id='dl-anggota-lap-mo'; document.body.appendChild(dl); dlHtml=dl; }
   dlHtml.innerHTML=angNama.map(n=>`<option value="${n}">`).join('');
-  bList.innerHTML=bnuArr.length===0
-    ? '<p id="ml-bnu-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>'
-    : bnuArr.map((b,i)=>mlBnuRowHtml(i,b.nama,b.tujuan,b.nilai)).join('');
 
   // PB publik list (Persembahan Bulanan)
   const pbJdw = pbAll.filter(p=> p.jadwalId === j.id || (p.tanggalJadwal && p.tanggalJadwal === j.tanggal));
@@ -2040,13 +2030,11 @@ function updMlTotal(){
   const g2=parseRp(document.getElementById('ml-g2')?.value)||0;
   const g3=parseRp(document.getElementById('ml-g3')?.value)||0;
   const stm=parseRp(document.getElementById('ml-stm')?.value)||0;
-  let bnu=0,i=0;
-  while(document.getElementById('ml-bnu-vl-'+i)!==null){ bnu+=parseRp(document.getElementById('ml-bnu-vl-'+i).value)||0; i++; }
   let pb=0,j=0;
   while(document.getElementById('ml-pb-vl-'+j)!==null){ pb+=parseRp(document.getElementById('ml-pb-vl-'+j).value)||0; j++; }
   let bnupub=0,k=0;
   while(document.getElementById('ml-bnupub-vl-'+k)!==null){ bnupub+=parseRp(document.getElementById('ml-bnupub-vl-'+k).value)||0; k++; }
-  const grand=g1+g2+g3+stm+bnu+pb+bnupub;
+  const grand=g1+g2+g3+stm+pb+bnupub;
   const el=document.getElementById('ml-grand'); if(el) el.textContent='Rp '+numFmt(grand);
 }
 
@@ -2060,24 +2048,15 @@ async function saveLapMo(){
   const hDalahi=parseInt(document.getElementById('ml-hd')?.value)||0;
   const hNaboru=parseInt(document.getElementById('ml-hn')?.value)||0;
 
-  // BNU admin
-  const bnuArr=[]; let i=0;
-  while(document.getElementById('ml-bnu-nm-'+i)!==null){
-    const nm=document.getElementById('ml-bnu-nm-'+i).value.trim();
-    const tj=document.getElementById('ml-bnu-tj-'+i)?.value.trim()||'';
-    const vl=parseRp(document.getElementById('ml-bnu-vl-'+i)?.value)||0;
-    if(nm||vl) bnuArr.push({nama:nm,tujuan:tj,nilai:vl});
-    i++;
-  }
-
-  // Simpan laporan utama
+  // Simpan laporan utama — pertahankan bnu[] lama jika ada
   const lapAll=await fsAll('laporan','ord',true);
   const jdwAll=await fsAll('jadwal','ord',true);
   const jdw=jdwAll.find(j=>j.id===jadwalId);
   const ex=lapAll.find(l=>l.jadwalId===jadwalId);
+  const existBnu=Array.isArray(ex?.bnu)?ex.bnu:[];
   const data={jadwalId,tanggal:jdw?.tanggal||'',jumlahHadir:hDalahi+hNaboru,
     hadirDalahi:hDalahi,hadirNaboru:hNaboru,
-    galangan1:g1,galangan2:g2,galangan3:g3,stm,bnu:bnuArr,ord:Date.now()};
+    galangan1:g1,galangan2:g2,galangan3:g3,stm,bnu:existBnu,ord:Date.now()};
   if(ex) await fsUpd('laporan',ex.id,data);
   else await fsAdd('laporan',data);
 
