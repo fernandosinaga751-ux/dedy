@@ -2428,7 +2428,7 @@ async function savePengurus(){
 // ║           WA LAPORAN                         ║
 // ╚══════════════════════════════════════════════╝
 async function sendLapWA(jadwalId){
-  const [jdwAll,lapAll,hadir,pg]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('hadir','ord',true),getPengurus()]);
+  const [jdwAll,lapAll,hadir,pg,pbAll]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('hadir','ord',true),getPengurus(),fsAll('persembahan_bulanan','ord',false)]);
   const j=jdwAll.find(x=>x.id===jadwalId);
   const lap=lapAll.find(l=>l.jadwalId===jadwalId)||{};
   const g1=parseInt(lap.galangan1)||0,g2=parseInt(lap.galangan2)||0,g3=parseInt(lap.galangan3)||0;
@@ -2439,11 +2439,22 @@ async function sendLapWA(jadwalId){
   const stm=parseInt(lap.stm)||0;
   const bnuArr=Array.isArray(lap.bnu)?lap.bnu:[];
   const totalBNU=bnuArr.reduce((s,b)=>s+(parseInt(b.nilai)||0),0);
-  const grandTotal=g1+g2+g3+stm+totalBNU;
+  const pbJdw=pbAll.filter(p=>p.jadwalId===jadwalId||(p.tanggalJadwal&&p.tanggalJadwal===j?.tanggal));
+  const pbItems=pbJdw.filter(p=>p.jenis==='Persembahan Bulanan');
+  const bnuPubItems=pbJdw.filter(p=>p.jenis==='BNU');
+  const totalPBPub=pbItems.reduce((s,p)=>s+(parseInt(p.nilai)||0),0);
+  const totalBNUPub=bnuPubItems.reduce((s,p)=>s+(parseInt(p.nilai)||0),0);
+  const grandTotal=g1+g2+g3+stm+totalBNU+totalPBPub+totalBNUPub;
   const tgl=fmtD(j?.tanggal||'');
 
   const bnuLines=bnuArr.length>0
-    ? '\n💝 *Persembahan Bulanan / BNU*\n'+bnuArr.map(b=>`   • ${b.nama||'-'}${b.tujuan?' ('+b.tujuan+')':''}: ${fmtRp(b.nilai)}`).join('\n')+'\n   *Total BNU: '+fmtRp(totalBNU)+'*'
+    ? '\n💝 *BNU (Admin)*\n'+bnuArr.map(b=>`   • ${b.nama||'-'}${b.tujuan?' ('+b.tujuan+')':''}: ${fmtRp(b.nilai)}`).join('\n')+'\n   *Total: '+fmtRp(totalBNU)+'*'
+    : '';
+  const pbLines=pbItems.length>0
+    ? '\n💰 *Persembahan Bulanan (Publik)*\n'+pbItems.map(p=>`   • ${p.nama} (${PB_MONTHS[(parseInt(p.bulan)||1)-1]}): ${fmtRp(p.nilai)}`).join('\n')+'\n   *Total: '+fmtRp(totalPBPub)+'*'
+    : '';
+  const bnuPubLines=bnuPubItems.length>0
+    ? '\n💝 *BNU (Publik)*\n'+bnuPubItems.map(p=>`   • ${p.nama||'-'}${p.tujuan?' ('+p.tujuan+')':''}: ${fmtRp(p.nilai)}`).join('\n')+'\n   *Total: '+fmtRp(totalBNUPub)+'*'
     : '';
 
   const msg = `🙏 *LAPORAN PARTONGGOAN*
@@ -2470,7 +2481,7 @@ ${'━'.repeat(30)}
    Galangan 3 : ${fmtRp(g3)}
    *Total     : ${fmtRp(g1+g2+g3)}*
 ${'━'.repeat(30)}${stm>0?`
-🏥 *SUMBANGAN STM* : ${fmtRp(stm)}`:''}${bnuLines}
+🏥 *SUMBANGAN STM* : ${fmtRp(stm)}`:''}${bnuLines}${pbLines}${bnuPubLines}
 ${'━'.repeat(30)}
 💰 *GRAND TOTAL SEMUA: ${fmtRp(grandTotal)}*
 ${'━'.repeat(30)}
@@ -2485,22 +2496,47 @@ _Laporan otomatis dari Sistem Partonggoan GKPS Krakatau Sektor 4_`;
   window.open(`https://wa.me/?text=${encoded}`, '_blank');
 }
 async function expLapXLS(){
-  const [jdwAll,lapAll,hadir]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('hadir','ord',true)]);
+  const [jdwAll,lapAll,hadir,pbAll]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('hadir','ord',true),fsAll('persembahan_bulanan','ord',false)]);
   const kB=jdwAll.filter(j=>j.tanggal&&parseInt(j.tanggal.split('-')[1])===lapBln);
   const wb=XLSX.utils.book_new();
-  const hdrs=['Tanggal','Jam','Alamat','Namanjabui/Tuan Rumah','Pengkhotbah','Paragenda','Sibasa Doding','Jml Hadir','Galangan 1','Galangan 2','Galangan 3','Total Galangan'];
+
+  // Sheet 1: Laporan utama
+  const hdrs=['Tanggal','Jam','Alamat','Namanjabui/Tuan Rumah','Pengkhotbah','Paragenda','Sibasa Doding','Jml Hadir','Galangan 1','Galangan 2','Galangan 3','Total Galangan','STM','BNU Admin','PB Publik','BNU Publik','Grand Total'];
   const rows=kB.map(j=>{
     const lap=lapAll.find(l=>l.jadwalId===j.id)||{};
     const hC=hadir.filter(h=>h.tanggal===j.tanggal&&h.hadir).length;
     const mH=lap.jumlahHadir!==undefined?lap.jumlahHadir:hC;
     const g1=parseInt(lap.galangan1)||0,g2=parseInt(lap.galangan2)||0,g3=parseInt(lap.galangan3)||0;
-    return [fmtD(j.tanggal),JAM,j.alamat||'',j.tuanRumah||'',j.pengkhotbah||'',j.paragenda||'',j.sibasaDoding||'',mH,g1,g2,g3,g1+g2+g3];
+    const stm=parseInt(lap.stm)||0;
+    const bnuAdmin=Array.isArray(lap.bnu)?lap.bnu.reduce((s,b)=>s+(parseInt(b.nilai)||0),0):0;
+    const pbJdw=pbAll.filter(p=>p.jadwalId===j.id||(p.tanggalJadwal&&p.tanggalJadwal===j.tanggal));
+    const pbPub=pbJdw.filter(p=>p.jenis==='Persembahan Bulanan').reduce((s,p)=>s+(parseInt(p.nilai)||0),0);
+    const bnuPub=pbJdw.filter(p=>p.jenis==='BNU').reduce((s,p)=>s+(parseInt(p.nilai)||0),0);
+    const grand=g1+g2+g3+stm+bnuAdmin+pbPub+bnuPub;
+    return [fmtD(j.tanggal),JAM,j.alamat||'',j.tuanRumah||'',j.pengkhotbah||'',j.paragenda||'',j.sibasaDoding||'',mH,g1,g2,g3,g1+g2+g3,stm,bnuAdmin,pbPub,bnuPub,grand];
   });
   const ttl=[`LAPORAN PARTONGGOAN GKPS KRAKATAU SEKTOR 4 — ${MN[lapBln-1].toUpperCase()} 2026`];
   const ws=XLSX.utils.aoa_to_sheet([ttl,[],hdrs,...rows]);
   ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdrs.length-1}}];
-  ws['!cols']=hdrs.map((_,i)=>({wch:[28,12,24,24,22,20,20,10,14,14,14,16][i]||12}));
+  ws['!cols']=hdrs.map((_,i)=>({wch:[28,12,24,24,22,20,20,10,14,14,14,16,12,14,14,14,16][i]||12}));
   XLSX.utils.book_append_sheet(wb,ws,`Laporan ${MN[lapBln-1]}`);
+
+  // Sheet 2: Detail PB & BNU per Kamis
+  const hdrs2=['Tanggal Kamis','Nama','Jenis','Bulan PB','Tujuan','Nilai','Sumber'];
+  const rows2=[];
+  kB.forEach(j=>{
+    const lap=lapAll.find(l=>l.jadwalId===j.id)||{};
+    (lap.bnu||[]).forEach(b=>{ rows2.push([fmtD(j.tanggal),b.nama||'-','BNU','-',b.tujuan||'-',parseInt(b.nilai)||0,'Admin']); });
+    const pbJdw=pbAll.filter(p=>p.jadwalId===j.id||(p.tanggalJadwal&&p.tanggalJadwal===j.tanggal));
+    pbJdw.forEach(p=>{ rows2.push([fmtD(j.tanggal),p.nama||'-',p.jenis,p.jenis==='Persembahan Bulanan'?MN[(parseInt(p.bulan)||1)-1]:'-',p.tujuan||'-',parseInt(p.nilai)||0,'Publik']); });
+  });
+  if(rows2.length>0){
+    const ws2=XLSX.utils.aoa_to_sheet([['DETAIL PERSEMBAHAN BULANAN & BNU — '+MN[lapBln-1].toUpperCase()+' 2026'],[],hdrs2,...rows2]);
+    ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdrs2.length-1}}];
+    ws2['!cols']=[{wch:28},{wch:24},{wch:22},{wch:14},{wch:22},{wch:16},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws2,'Detail PB & BNU');
+  }
+
   XLSX.writeFile(wb,`Laporan_GKPS_Krakatau_S4_${MN[lapBln-1]}_2026.xlsx`);
 }
 
@@ -2531,8 +2567,10 @@ function buildTplJdw(j, pg){
     <div style="text-align:center;margin-top:8px;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:6px">Partonggoan GKPS Krakatau Sektor 4 · ${fmtD(j.tanggal)}</div>
   </div>`;
 }
-function buildTplLap(j, lap, hC, pg){
+function buildTplLap(j, lap, hC, pg, pbItems, bnuPubItems){
   pg = pg || {};
+  pbItems = pbItems || [];
+  bnuPubItems = bnuPubItems || [];
   const g1=parseInt(lap?.galangan1)||0, g2=parseInt(lap?.galangan2)||0, g3=parseInt(lap?.galangan3)||0;
   const hDalahi=parseInt(lap?.hadirDalahi)||0, hNaboru=parseInt(lap?.hadirNaboru)||0;
   const totalHdir=hDalahi+hNaboru;
@@ -2540,7 +2578,9 @@ function buildTplLap(j, lap, hC, pg){
   const stm=parseInt(lap?.stm)||0;
   const bnuArr=Array.isArray(lap?.bnu)?lap.bnu:[];
   const totalBNU=bnuArr.reduce((s,b)=>s+(parseInt(b.nilai)||0),0);
-  const grandTotal=g1+g2+g3+stm+totalBNU;
+  const totalPBPub=pbItems.reduce((s,p)=>s+(parseInt(p.nilai)||0),0);
+  const totalBNUPub=bnuPubItems.reduce((s,p)=>s+(parseInt(p.nilai)||0),0);
+  const grandTotal=g1+g2+g3+stm+totalBNU+totalPBPub+totalBNUPub;
 
   const infoRows=[['Tanggal',fmtD(j.tanggal)],['Jam',JAM],['Alamat',j.alamat||'-'],['Namanjabui',j.tuanRumah||'-'],['Pengkhotbah',j.pengkhotbah||'-'],['Paragenda',j.paragenda||'-'],['Sibasa Doding',j.sibasaDoding||'-']];
 
@@ -2584,12 +2624,32 @@ function buildTplLap(j, lap, hC, pg){
     </table>
 
     ${bnuArr.length>0?`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
-      <tr style="background:#1a2a1a;color:#d4a843"><td colspan="2" style="padding:5px 9px;font-weight:bold;font-size:10px">PERSEMBAHAN BULANAN / BNU</td></tr>
+      <tr style="background:#1a2a1a;color:#d4a843"><td colspan="2" style="padding:5px 9px;font-weight:bold;font-size:10px">BNU (INPUT ADMIN)</td></tr>
       ${bnuArr.map((b,i)=>`<tr style="background:${i%2===0?'#f5f0e8':'#fff'}">
         <td style="padding:6px 9px;border:1px solid #ddd">${b.nama||'-'}${b.tujuan?` (${b.tujuan})`:''}</td>
         <td style="padding:6px 9px;border:1px solid #ddd">${fmtRp(b.nilai)}</td>
       </tr>`).join('')}
-      <tr style="background:#fff3cd"><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">Total BNU</td><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">${fmtRp(totalBNU)}</td></tr>
+      <tr style="background:#fff3cd"><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">Total BNU Admin</td><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">${fmtRp(totalBNU)}</td></tr>
+    </table>`:''}
+
+    ${pbItems.length>0?`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+      <tr style="background:#1a2a1a;color:#d4a843"><td colspan="3" style="padding:5px 9px;font-weight:bold;font-size:10px">PERSEMBAHAN BULANAN (INPUT PUBLIK)</td></tr>
+      <tr style="background:#e8f5e9"><td style="padding:5px 9px;border:1px solid #ddd;font-weight:bold;font-size:10px">Nama</td><td style="padding:5px 9px;border:1px solid #ddd;font-weight:bold;font-size:10px">Bulan</td><td style="padding:5px 9px;border:1px solid #ddd;font-weight:bold;font-size:10px">Nilai</td></tr>
+      ${pbItems.map((p,i)=>`<tr style="background:${i%2===0?'#f5f0e8':'#fff'}">
+        <td style="padding:6px 9px;border:1px solid #ddd">${p.nama||'-'}</td>
+        <td style="padding:6px 9px;border:1px solid #ddd;font-size:10px;color:#555">${PB_MONTHS[(parseInt(p.bulan)||1)-1]}</td>
+        <td style="padding:6px 9px;border:1px solid #ddd">${fmtRp(p.nilai)}</td>
+      </tr>`).join('')}
+      <tr style="background:#d4edda"><td colspan="2" style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">Total Persembahan Bulanan</td><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">${fmtRp(totalPBPub)}</td></tr>
+    </table>`:''}
+
+    ${bnuPubItems.length>0?`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+      <tr style="background:#1a2a1a;color:#d4a843"><td colspan="2" style="padding:5px 9px;font-weight:bold;font-size:10px">BNU (INPUT PUBLIK)</td></tr>
+      ${bnuPubItems.map((p,i)=>`<tr style="background:${i%2===0?'#f5f0e8':'#fff'}">
+        <td style="padding:6px 9px;border:1px solid #ddd">${p.nama||'-'}${p.tujuan?` (${p.tujuan})`:''}</td>
+        <td style="padding:6px 9px;border:1px solid #ddd">${fmtRp(p.nilai)}</td>
+      </tr>`).join('')}
+      <tr style="background:#fff3cd"><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">Total BNU Publik</td><td style="padding:6px 9px;border:1px solid #ddd;font-weight:bold">${fmtRp(totalBNUPub)}</td></tr>
     </table>`:''}
 
     <div style="background:#1a2a1a;color:#d4a843;border-radius:5px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -2637,16 +2697,22 @@ async function captureAndExport(html, filename, asPDF){
 async function expJdwPDF(id){ const [all,pg]=await Promise.all([fsAll('jadwal','ord',true),getPengurus()]); const j=all.find(x=>x.id===id); if(j) await captureAndExport(buildTplJdw(j,pg),`Jadwal_${j.tanggal}`,true); }
 async function expJdwPhoto(id){ const [all,pg]=await Promise.all([fsAll('jadwal','ord',true),getPengurus()]); const j=all.find(x=>x.id===id); if(j) await captureAndExport(buildTplJdw(j,pg),`Jadwal_${j.tanggal}`,false); }
 async function expLapPDF(jadwalId){
-  const [jdwAll,lapAll,hadir,pg]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('hadir','ord',true),getPengurus()]);
+  const [jdwAll,lapAll,hadir,pg,pbAll]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('hadir','ord',true),getPengurus(),fsAll('persembahan_bulanan','ord',false)]);
   const j=jdwAll.find(x=>x.id===jadwalId); const lap=lapAll.find(l=>l.jadwalId===jadwalId);
   const hC=hadir.filter(h=>h.tanggal===j?.tanggal&&h.hadir).length;
-  if(j) await captureAndExport(buildTplLap(j,lap,hC,pg),`Laporan_${j.tanggal}`,true);
+  const pbJdw=pbAll.filter(p=>p.jadwalId===jadwalId||(p.tanggalJadwal&&p.tanggalJadwal===j?.tanggal));
+  const pbItems=pbJdw.filter(p=>p.jenis==='Persembahan Bulanan');
+  const bnuPubItems=pbJdw.filter(p=>p.jenis==='BNU');
+  if(j) await captureAndExport(buildTplLap(j,lap,hC,pg,pbItems,bnuPubItems),`Laporan_${j.tanggal}`,true);
 }
 async function expLapPhoto(jadwalId){
-  const [jdwAll,lapAll,hadir,pg]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('hadir','ord',true),getPengurus()]);
+  const [jdwAll,lapAll,hadir,pg,pbAll]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('hadir','ord',true),getPengurus(),fsAll('persembahan_bulanan','ord',false)]);
   const j=jdwAll.find(x=>x.id===jadwalId); const lap=lapAll.find(l=>l.jadwalId===jadwalId);
   const hC=hadir.filter(h=>h.tanggal===j?.tanggal&&h.hadir).length;
-  if(j) await captureAndExport(buildTplLap(j,lap,hC,pg),`Laporan_${j.tanggal}`,false);
+  const pbJdw=pbAll.filter(p=>p.jadwalId===jadwalId||(p.tanggalJadwal&&p.tanggalJadwal===j?.tanggal));
+  const pbItems=pbJdw.filter(p=>p.jenis==='Persembahan Bulanan');
+  const bnuPubItems=pbJdw.filter(p=>p.jenis==='BNU');
+  if(j) await captureAndExport(buildTplLap(j,lap,hC,pg,pbItems,bnuPubItems),`Laporan_${j.tanggal}`,false);
 }
 
 // ╔══════════════════════════════════════════════╗
