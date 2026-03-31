@@ -269,7 +269,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 .pub-logo-wrap{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:10px}
 .lbox-logo-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
 
-/* ── MODAL LAPORAN EDIT ─────────────────────── */
+/* ── PERSEMBAHAN BULANAN PUBLIC FORM ──────────── */
+.pub-pb-row{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.pub-pb-row:last-child hr{display:none}
+
+/* ── PERSEMBAHAN BULANAN ADMIN TABS ──────────── */
+#pb-tab-bulan,#pb-tab-rekap{transition:opacity .15s}
 .mo-lap-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .mo-lap-full{grid-column:1/-1}
 .petugas-count{display:inline-block;font-size:10px;font-weight:700;background:var(--sidebar);color:var(--gold);border-radius:20px;padding:1px 8px;margin-left:6px;vertical-align:middle}
@@ -371,6 +376,7 @@ datalist option{font-size:13px}
       <a class="nl" onclick="goPage('jadwal')" data-p="jadwal"><span class="ic">📅</span>Jadwal Partonggoan</a>
       <a class="nl" onclick="goPage('hadir')" data-p="hadir"><span class="ic">✅</span>Daftar Hadir</a>
       <a class="nl" onclick="goPage('laporan')" data-p="laporan"><span class="ic">📋</span>Laporan</a>
+      <a class="nl" onclick="goPage('persembahan')" data-p="persembahan"><span class="ic">💝</span>Persembahan Bulanan</a>
       <a class="nl" onclick="goPage('pengurus')" data-p="pengurus"><span class="ic">👔</span>Pengurus</a>
     </nav>
     <div class="sfooter">
@@ -681,7 +687,7 @@ function doLogout(){ document.getElementById('lu').value=''; document.getElement
 function goPage(p){
   curPage=p;
   document.querySelectorAll('.nl').forEach(a=>a.classList.toggle('active',a.dataset.p===p));
-  const TITLES={dashboard:'Dashboard',anggota:'Data Anggota Sektor 4',jadwal:'Jadwal Partonggoan 2026',hadir:'Daftar Hadir',laporan:'Laporan Partonggoan',pengurus:'Data Pengurus Sektor 4'};
+  const TITLES={dashboard:'Dashboard',anggota:'Data Anggota Sektor 4',jadwal:'Jadwal Partonggoan 2026',hadir:'Daftar Hadir',laporan:'Laporan Partonggoan',persembahan:'Persembahan Bulanan',pengurus:'Data Pengurus Sektor 4'};
   document.getElementById('ptitle').textContent=TITLES[p]||p;
   document.getElementById('pcontent').innerHTML='<div class="loading"><span class="spin"></span><br>Memuat data...</div>';
   renderPage(p);
@@ -695,6 +701,7 @@ async function renderPage(p){
   else if(p==='jadwal') el.innerHTML=await pgJdw();
   else if(p==='hadir') el.innerHTML=await pgHadir();
   else if(p==='laporan') el.innerHTML=await pgLap();
+  else if(p==='persembahan') el.innerHTML=await pgPersembahan();
   else if(p==='pengurus') el.innerHTML=await pgPengurus();
 }
 
@@ -729,6 +736,14 @@ async function loadPublic(){
     }
     document.getElementById('pub-form').innerHTML=renderPubForm(anggota, pubState.laporan);
     document.getElementById('pub-form').classList.remove('hidden');
+
+    // Init PB datalist & state
+    _pubPBAngNama = anggota.map(a=>a.nama);
+    let dl = document.getElementById('dl-pub-pb-ang');
+    if(!dl){ dl=document.createElement('datalist'); dl.id='dl-pub-pb-ang'; document.body.appendChild(dl); }
+    dl.innerHTML = _pubPBAngNama.map(n=>`<option value="${n}">`).join('');
+    // Init first PB row type visibility
+    updPBType(0);
 
     // Render anggota yang sudah absen sebelumnya
     if(Object.keys(pubState.map).length > 0){
@@ -827,23 +842,22 @@ function renderPubForm(anggota, lap){
       <div id="pub-bnu-list">
         ${bnuArr.length===0
           ? '<p id="pub-bnu-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah untuk menambahkan.</p>'
-          : bnuArr.map((b,bi)=>`
-            <div class="pub-bnu-item" id="pub-bnu-row-${bi}">
-              <input type="text" placeholder="Nama" value="${b.nama||''}" list="dl-anggota-pub" id="pub-bnu-nm-${bi}">
-              <div style="position:relative;display:flex;align-items:center;border:1.5px solid var(--border);border-radius:7px;background:#fff;overflow:hidden">
-                <span style="padding:7px 0 7px 9px;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap">Rp</span>
-                <input type="text" placeholder="0" value="${b.nilai?numFmt(b.nilai):''}" id="pub-bnu-vl-${bi}" class="gal-inp" oninput="fmtCurInp(this)" style="text-align:right">
-              </div>
-              <button class="pub-bnu-del" onclick="delPubBNU(${bi})">✕</button>
-            </div>
-            <div style="padding:0 0 8px 0">
-              <input type="text" placeholder="Tujuan persembahan" value="${b.tujuan||''}" id="pub-bnu-tj-${bi}"
-                style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12.5px;font-family:inherit;background:#fff;outline:none;color:var(--muted)">
-            </div>`).join('')}
+          : bnuArr.map((b,bi)=>pubBNURowHtml(bi, b.nama, b.tujuan, b.nilai)).join('')}
       </div>
     </div>
 
     <button class="pbtn dark" id="pub-kirim-btn" onclick="submitAbsen()">📤 Kirim Data Kehadiran</button>
+  </div>
+
+  <!-- FORM PERSEMBAHAN BULANAN MANDIRI -->
+  <div class="pub-card" id="pub-pb-form">
+    <h3>💝 Input Persembahan Bulanan</h3>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;margin-top:-6px">Langsung input persembahan bulanan tanpa perlu absen. Data masuk ke rekap admin.</p>
+    <div id="pub-pb-rows">
+      ${pubPBRowHtml(0, angNama)}
+    </div>
+    <button class="tbtn" onclick="addPubPBRow(${JSON.stringify(angNama)})" style="margin-top:8px;padding:7px 16px;font-size:12.5px;border-color:var(--gold);color:var(--accent)">➕ Tambah Pemberi</button>
+    <button class="pbtn go" id="pub-pb-btn" onclick="submitPubPB()" style="margin-top:14px">📤 Kirim Persembahan Bulanan</button>
   </div>`;
 }
 function setAbs(id, val){
@@ -1014,18 +1028,7 @@ function addPubBNU(){
   if(empty) empty.remove();
   const bi=getPubBNUCount();
   const div=document.createElement('div');
-  div.innerHTML=`<div class="pub-bnu-item" id="pub-bnu-row-${bi}">
-    <input type="text" placeholder="Nama" list="dl-anggota-pub" id="pub-bnu-nm-${bi}">
-    <div style="position:relative;display:flex;align-items:center;border:1.5px solid var(--border);border-radius:7px;background:#fff;overflow:hidden">
-      <span style="padding:7px 0 7px 9px;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap">Rp</span>
-      <input type="text" placeholder="0" id="pub-bnu-vl-${bi}" class="gal-inp" oninput="fmtCurInp(this)" style="text-align:right">
-    </div>
-    <button class="pub-bnu-del" onclick="delPubBNU(${bi})">✕</button>
-  </div>
-  <div style="padding:0 0 8px 0">
-    <input type="text" placeholder="Tujuan persembahan" id="pub-bnu-tj-${bi}"
-      style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12.5px;font-family:inherit;background:#fff;outline:none;color:var(--muted)">
-  </div>`;
+  div.innerHTML=pubBNURowHtml(bi);
   list.appendChild(div);
   div.querySelector('input').focus();
 }
@@ -1048,6 +1051,134 @@ function getPubBNUData(){
     bi++;
   }
   return arr;
+}
+
+function pubBNURowHtml(bi, nm='', tj='', vl=''){
+  return `<div class="pub-bnu-item" id="pub-bnu-row-${bi}">
+    <input type="text" placeholder="Nama" value="${nm||''}" list="dl-anggota-pub" id="pub-bnu-nm-${bi}">
+    <div style="position:relative;display:flex;align-items:center;border:1.5px solid var(--border);border-radius:7px;background:#fff;overflow:hidden">
+      <span style="padding:7px 0 7px 9px;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap">Rp</span>
+      <input type="text" placeholder="0" value="${vl?numFmt(vl):''}" id="pub-bnu-vl-${bi}" class="gal-inp" oninput="fmtCurInp(this)" style="text-align:right">
+    </div>
+    <button class="pub-bnu-del" onclick="delPubBNU(${bi})">✕</button>
+  </div>
+  <div style="padding:0 0 8px 0">
+    <input type="text" placeholder="Tujuan persembahan" value="${tj||''}" id="pub-bnu-tj-${bi}"
+      style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12.5px;font-family:inherit;background:#fff;outline:none;color:var(--muted)">
+  </div>`;
+}
+
+// ── PUBLIC PERSEMBAHAN BULANAN FORM ───────────
+const PB_MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const PB_TYPES = ['Persembahan Bulanan','BNU'];
+
+function pubPBRowHtml(i, angNama=[]){
+  const curM = new Date().getMonth(); // 0-based
+  return `<div class="pub-pb-row" id="pub-pb-row-${i}">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);padding-top:3px">Pemberi #${i+1}</div>
+      ${i>0?`<button class="pub-bnu-del" onclick="delPubPBRow(${i})" style="margin-top:0">✕</button>`:'<div></div>'}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <label style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px">Nama</label>
+        <input type="text" id="pub-pb-nm-${i}" placeholder="Ketik nama..." list="dl-pub-pb-ang" autocomplete="off"
+          style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:var(--text)" oninput="updPBType(${i})">
+      </div>
+      <div>
+        <label style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px">Jenis</label>
+        <select id="pub-pb-tp-${i}" onchange="updPBType(${i})"
+          style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:var(--text)">
+          <option value="Persembahan Bulanan">Persembahan Bulanan</option>
+          <option value="BNU">BNU</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div id="pub-pb-bulan-wrap-${i}">
+        <label style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px">Bulan</label>
+        <select id="pub-pb-bl-${i}"
+          style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:var(--text)">
+          ${PB_MONTHS.map((m,mi)=>`<option value="${mi+1}" ${mi===curM?'selected':''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px">Nilai (Rp)</label>
+        <div class="gal-inp-box"><span class="gal-prefix">Rp</span>
+          <input class="gal-inp" type="text" id="pub-pb-vl-${i}" placeholder="0" oninput="fmtCurInp(this)">
+        </div>
+      </div>
+    </div>
+    <div id="pub-pb-tujuan-wrap-${i}" style="margin-bottom:6px">
+      <label style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px">Tujuan BNU</label>
+      <input type="text" id="pub-pb-tj-${i}" placeholder="Contoh: Pengutusan, Pembangunan..."
+        style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:var(--text)">
+    </div>
+    <hr style="border:none;border-top:1px dashed var(--border);margin:10px 0 4px">
+  </div>`;
+}
+
+function updPBType(i){
+  const tp = document.getElementById('pub-pb-tp-'+i)?.value;
+  const tujWrap = document.getElementById('pub-pb-tujuan-wrap-'+i);
+  const blWrap = document.getElementById('pub-pb-bulan-wrap-'+i);
+  if(tujWrap) tujWrap.style.display = tp==='BNU' ? 'block' : 'none';
+  if(blWrap) blWrap.style.display = tp==='Persembahan Bulanan' ? 'block' : 'none';
+}
+
+let _pubPBAngNama = [];
+function addPubPBRow(angNama){
+  _pubPBAngNama = angNama || _pubPBAngNama;
+  const wrap = document.getElementById('pub-pb-rows');
+  let i = 0;
+  while(document.getElementById('pub-pb-nm-'+i)!==null) i++;
+  const div = document.createElement('div');
+  div.innerHTML = pubPBRowHtml(i, _pubPBAngNama);
+  wrap.appendChild(div.firstElementChild);
+  // init type visibility
+  updPBType(i);
+  // init datalist
+  let dl = document.getElementById('dl-pub-pb-ang');
+  if(!dl){ dl=document.createElement('datalist'); dl.id='dl-pub-pb-ang'; dl.innerHTML=_pubPBAngNama.map(n=>`<option value="${n}">`).join(''); document.body.appendChild(dl); }
+}
+function delPubPBRow(i){
+  const row = document.getElementById('pub-pb-row-'+i);
+  if(row) row.remove();
+}
+
+async function submitPubPB(){
+  const btn = document.getElementById('pub-pb-btn');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Menyimpan...'; }
+  try {
+    const rows = [];
+    let i=0;
+    while(document.getElementById('pub-pb-nm-'+i)!==null){
+      const nm = document.getElementById('pub-pb-nm-'+i)?.value.trim();
+      const tp = document.getElementById('pub-pb-tp-'+i)?.value || 'Persembahan Bulanan';
+      const bl = parseInt(document.getElementById('pub-pb-bl-'+i)?.value)||new Date().getMonth()+1;
+      const vl = parseRp(document.getElementById('pub-pb-vl-'+i)?.value)||0;
+      const tj = document.getElementById('pub-pb-tj-'+i)?.value.trim()||'';
+      if(nm && vl>0) rows.push({nama:nm, jenis:tp, bulan:bl, nilai:vl, tujuan:tj, tahun:2026});
+      i++;
+    }
+    if(rows.length===0){ alert('Isi minimal 1 baris dengan nama dan nilai!'); if(btn){btn.disabled=false;btn.textContent='📤 Kirim Persembahan Bulanan';} return; }
+    for(const r of rows){
+      await fsAdd('persembahan_bulanan', {...r, ord:Date.now(), ts: fbOk?firebase.firestore.FieldValue.serverTimestamp():Date.now()});
+    }
+    // Reset form
+    let j=0;
+    while(document.getElementById('pub-pb-nm-'+j)!==null){
+      document.getElementById('pub-pb-nm-'+j).value='';
+      if(document.getElementById('pub-pb-vl-'+j)) document.getElementById('pub-pb-vl-'+j).value='';
+      if(document.getElementById('pub-pb-tj-'+j)) document.getElementById('pub-pb-tj-'+j).value='';
+      j++;
+    }
+    if(btn){btn.disabled=false;btn.textContent='📤 Kirim Persembahan Bulanan';}
+    alert(`✅ ${rows.length} data persembahan bulanan berhasil dikirim! Terima kasih.`);
+  } catch(e){
+    alert('Gagal menyimpan: '+e.message);
+    if(btn){btn.disabled=false;btn.textContent='📤 Kirim Persembahan Bulanan';}
+  }
 }
 
 async function submitAbsen(){
@@ -1081,6 +1212,19 @@ async function submitAbsen(){
         stm:stm, bnu:bnuArr};
       if(lapArr.length) await fsUpd('laporan',lapArr[0].id,lapData);
       else await fsAdd('laporan',lapData);
+
+      // Sinkron BNU ke persembahan_bulanan
+      const blnLap = parseInt(jdw.tanggal?.split('-')[1])||new Date().getMonth()+1;
+      // Hapus BNU lama dari jadwal ini dulu
+      const oldPB = await fsWhere('persembahan_bulanan','jadwalId','==',jadwalId);
+      for(const op of oldPB) await fsDel('persembahan_bulanan',op.id);
+      // Simpan baru
+      for(const b of bnuArr){
+        if(b.nama||b.nilai) await fsAdd('persembahan_bulanan',{
+          nama:b.nama||'', jenis:'BNU', bulan:blnLap, nilai:parseInt(b.nilai)||0,
+          tujuan:b.tujuan||'', jadwalId, tahun:2026, ord:Date.now()
+        });
+      }
     }
 
     // Show summary
@@ -1728,6 +1872,295 @@ async function delLap(jadwalId){
   const ex=lapAll.find(l=>l.jadwalId===jadwalId);
   if(ex) await fsDel('laporan',ex.id);
   renderPage('laporan');
+}
+
+// ╔══════════════════════════════════════════════╗
+// ║       PERSEMBAHAN BULANAN                    ║
+// ╚══════════════════════════════════════════════╝
+async function pgPersembahan(){
+  const [anggt, pbAll, lapAll, jdwAll] = await Promise.all([
+    fsAll('anggota','ord',true),
+    fsAll('persembahan_bulanan','ord',false),
+    fsAll('laporan','ord',true),
+    fsAll('jadwal','ord',true)
+  ]);
+
+  // Gabung PB dari koleksi persembahan_bulanan + dari laporan BNU
+  // Buat map bulan → daftar pemberi
+  const pbMap = {}; // bulan(1-11) → [{nama, jenis, nilai, tujuan, sumber, tanggal}]
+  for(let m=1;m<=11;m++) pbMap[m]=[];
+
+  // Dari koleksi persembahan_bulanan (input publik)
+  pbAll.forEach(p=>{
+    const bln = parseInt(p.bulan)||0;
+    if(bln>=1&&bln<=11) pbMap[bln].push({
+      nama:p.nama||'', jenis:p.jenis||'Persembahan Bulanan',
+      nilai:parseInt(p.nilai)||0, tujuan:p.tujuan||'',
+      sumber:'Mandiri', id:p.id
+    });
+  });
+
+  // Dari laporan BNU (input admin/publik via absen)
+  lapAll.forEach(lap=>{
+    const jdw = jdwAll.find(j=>j.id===lap.jadwalId);
+    if(!jdw||!jdw.tanggal) return;
+    const bln = parseInt(jdw.tanggal.split('-')[1]);
+    if(bln<1||bln>11) return;
+    const bnuArr = Array.isArray(lap.bnu)?lap.bnu:[];
+    bnuArr.forEach(b=>{
+      pbMap[bln].push({
+        nama:b.nama||'', jenis:'BNU',
+        nilai:parseInt(b.nilai)||0, tujuan:b.tujuan||'',
+        sumber:'Laporan '+fmtD(jdw.tanggal), id:null
+      });
+    });
+  });
+
+  // Hitung rekapitulasi per anggota
+  const anggtRekap = anggt.map(a=>{
+    const sudah = [];
+    for(let m=1;m<=11;m++){
+      const bayar = pbMap[m].filter(p=> p.nama.toLowerCase()===a.nama.toLowerCase() && p.jenis==='Persembahan Bulanan');
+      if(bayar.length>0) sudah.push({bulan:m, nilai:bayar.reduce((s,x)=>s+x.nilai,0)});
+    }
+    const totalBNU = [];
+    for(let m=1;m<=11;m++){
+      const bnu = pbMap[m].filter(p=> p.nama.toLowerCase()===a.nama.toLowerCase() && p.jenis==='BNU');
+      bnu.forEach(b=> totalBNU.push({bulan:m,...b}));
+    }
+    return {...a, sudah, totalBNU};
+  });
+
+  // State bulan filter untuk tabel
+  const selBln = window._pbBln || new Date().getMonth()+1;
+  window._pbBln = selBln;
+
+  const pbBln = pbMap[selBln]||[];
+  const totalNilaiBln = pbBln.filter(p=>p.jenis==='Persembahan Bulanan').reduce((s,p)=>s+p.nilai,0);
+  const totalBNUBln = pbBln.filter(p=>p.jenis==='BNU').reduce((s,p)=>s+p.nilai,0);
+
+  return `
+  <div class="ph">
+    <h2>💝 Persembahan Bulanan — Sektor 4</h2>
+    <div class="ph-acts">
+      <button class="btn btn-g" onclick="expPBXLS()">📥 Export Excel</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)">
+    <button onclick="setPBTab('rekap')" id="pbt-rekap" class="btn" style="border-radius:0;border:none;padding:9px 16px;font-size:13px;border-bottom:2px solid transparent;color:var(--muted);background:none;margin-bottom:-2px">📊 Rekap Anggota</button>
+    <button onclick="setPBTab('bulan')" id="pbt-bulan" class="btn" style="border-radius:0;border:none;padding:9px 16px;font-size:13px;border-bottom:2px solid var(--gold);color:var(--accent);background:none;margin-bottom:-2px;font-weight:700">📅 Per Bulan</button>
+  </div>
+
+  <!-- TAB: PER BULAN -->
+  <div id="pb-tab-bulan">
+    <div class="mbar">
+      <label>Bulan:</label>
+      <select onchange="window._pbBln=parseInt(this.value);renderPage('persembahan')">
+        ${[...Array(11).keys()].map(i=>`<option value="${i+1}" ${selBln===(i+1)?'selected':''}>${MN[i]}</option>`).join('')}
+      </select>
+      <span style="font-size:12px;color:var(--muted)">${pbBln.length} entri</span>
+    </div>
+
+    <!-- Summary cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="stat-card"><div class="stat-icon">💰</div><div>
+        <div class="stat-label">Total Persembahan Bulanan</div>
+        <div class="stat-val" style="font-size:15px">${fmtRp(totalNilaiBln)}</div>
+      </div></div>
+      <div class="stat-card"><div class="stat-icon">💝</div><div>
+        <div class="stat-label">Total BNU</div>
+        <div class="stat-val" style="font-size:15px">${fmtRp(totalBNUBln)}</div>
+      </div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div>
+        <div class="stat-label">Jumlah Pemberi</div>
+        <div class="stat-val">${pbBln.length}</div>
+      </div></div>
+    </div>
+
+    <!-- Tabel per bulan -->
+    <div class="tw">
+      <table>
+        <thead><tr><th>#</th><th>Nama</th><th>Jenis</th><th>Tujuan</th><th>Nilai</th><th>Sumber</th><th>Aksi</th></tr></thead>
+        <tbody>
+          ${pbBln.length===0
+            ? `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">Belum ada data persembahan bulan ${MN[selBln-1]}.</td></tr>`
+            : pbBln.map((p,i)=>`<tr>
+                <td>${i+1}</td>
+                <td><b>${p.nama||'-'}</b></td>
+                <td><span class="badge ${p.jenis==='BNU'?'bg-y':'bg-g'}">${p.jenis}</span></td>
+                <td style="color:var(--muted);font-size:12px">${p.tujuan||'-'}</td>
+                <td><b style="color:var(--accent)">${fmtRp(p.nilai)}</b></td>
+                <td style="font-size:11px;color:var(--muted)">${p.sumber}</td>
+                <td>${p.id?`<button class="btn btn-sm btn-d" onclick="delPB('${p.id}')">🗑</button>`:'-'}</td>
+              </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: REKAP ANGGOTA (hidden by default) -->
+  <div id="pb-tab-rekap" class="hidden">
+    <div class="ibox" style="font-size:12.5px">✅ = sudah bayar bulan itu &nbsp;|&nbsp; ⬜ = belum ada data &nbsp;|&nbsp; Klik nama untuk detail BNU</div>
+    <div class="tw" style="overflow-x:auto">
+      <table class="ht">
+        <thead>
+          <tr>
+            <th style="text-align:left">#</th>
+            <th style="text-align:left;padding-left:8px;white-space:nowrap">Nama Anggota</th>
+            ${[...Array(11).keys()].map(i=>`<th style="font-size:10px">${MN[i].substring(0,3)}</th>`).join('')}
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${anggtRekap.length===0
+            ? `<tr><td colspan="14" style="text-align:center;padding:24px;color:var(--muted)">Belum ada data anggota.</td></tr>`
+            : anggtRekap.map((a,idx)=>`<tr>
+                <td>${idx+1}</td>
+                <td style="font-weight:600;white-space:nowrap">
+                  <a href="#" onclick="showDetPB('${a.id}');return false" style="color:var(--accent)">${a.nama}</a>
+                </td>
+                ${[...Array(11).keys()].map(mi=>{
+                  const bln=mi+1;
+                  const bayar=a.sudah.find(s=>s.bulan===bln);
+                  return bayar
+                    ? `<td title="${fmtRp(bayar.nilai)}"><span style="color:var(--success);font-size:15px">✅</span></td>`
+                    : `<td><span style="color:var(--border);font-size:14px">⬜</span></td>`;
+                }).join('')}
+                <td><b style="color:var(--accent)">${a.sudah.length}</b><span style="font-size:10px;color:var(--muted)">/11</span></td>
+              </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function setPBTab(tab){
+  document.getElementById('pb-tab-bulan').classList.toggle('hidden', tab!=='bulan');
+  document.getElementById('pb-tab-rekap').classList.toggle('hidden', tab!=='rekap');
+  document.getElementById('pbt-bulan').style.cssText = tab==='bulan'
+    ? 'border-radius:0;border:none;padding:9px 16px;font-size:13px;border-bottom:2px solid var(--gold);color:var(--accent);background:none;margin-bottom:-2px;font-weight:700'
+    : 'border-radius:0;border:none;padding:9px 16px;font-size:13px;border-bottom:2px solid transparent;color:var(--muted);background:none;margin-bottom:-2px';
+  document.getElementById('pbt-rekap').style.cssText = tab==='rekap'
+    ? 'border-radius:0;border:none;padding:9px 16px;font-size:13px;border-bottom:2px solid var(--gold);color:var(--accent);background:none;margin-bottom:-2px;font-weight:700'
+    : 'border-radius:0;border:none;padding:9px 16px;font-size:13px;border-bottom:2px solid transparent;color:var(--muted);background:none;margin-bottom:-2px';
+}
+
+async function delPB(id){
+  if(!confirm('Hapus data persembahan ini?')) return;
+  await fsDel('persembahan_bulanan', id);
+  renderPage('persembahan');
+}
+
+async function showDetPB(angId){
+  const [anggt, pbAll, lapAll, jdwAll] = await Promise.all([
+    fsAll('anggota','ord',true), fsAll('persembahan_bulanan','ord',false),
+    fsAll('laporan','ord',true), fsAll('jadwal','ord',true)
+  ]);
+  const a = anggt.find(x=>x.id===angId); if(!a) return;
+
+  // Kumpulkan semua data PB & BNU anggota ini
+  const myPB = pbAll.filter(p=>p.nama.toLowerCase()===a.nama.toLowerCase());
+  const myBNU = [];
+  lapAll.forEach(lap=>{
+    const jdw=jdwAll.find(j=>j.id===lap.jadwalId); if(!jdw) return;
+    (lap.bnu||[]).forEach(b=>{
+      if((b.nama||'').toLowerCase()===a.nama.toLowerCase())
+        myBNU.push({...b, tanggal:jdw.tanggal});
+    });
+  });
+
+  const totalPB = myPB.filter(p=>p.jenis==='Persembahan Bulanan').reduce((s,p)=>s+parseInt(p.nilai||0),0);
+  const totalBNU = myPB.filter(p=>p.jenis==='BNU').reduce((s,p)=>s+parseInt(p.nilai||0),0)
+                 + myBNU.reduce((s,b)=>s+parseInt(b.nilai||0),0);
+
+  document.getElementById('mo-det-t').textContent = a.nama+' — Persembahan Bulanan';
+  document.getElementById('mo-det-b').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="dc"><div class="n" style="font-size:18px">${fmtRp(totalPB)}</div><div class="l">Total Persembahan Bulanan</div></div>
+      <div class="dc"><div class="n" style="font-size:18px">${fmtRp(totalBNU)}</div><div class="l">Total BNU</div></div>
+    </div>
+    <h4 style="font-family:'Lora',serif;font-size:13px;margin-bottom:8px">📅 Persembahan Bulanan per Bulan</h4>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">
+      ${[...Array(11).keys()].map(mi=>{
+        const bln=mi+1;
+        const bayar=myPB.filter(p=>parseInt(p.bulan)===bln&&p.jenis==='Persembahan Bulanan');
+        const val=bayar.reduce((s,p)=>s+parseInt(p.nilai||0),0);
+        return `<div style="background:${val>0?'#d4edda':'var(--bg)'};border:1px solid ${val>0?'var(--success)':'var(--border)'};border-radius:7px;padding:7px;text-align:center">
+          <div style="font-size:10px;color:${val>0?'#155724':'var(--muted)'};font-weight:700">${MN[mi].substring(0,3)}</div>
+          <div style="font-size:11px;font-weight:700;color:${val>0?'var(--success)':'var(--muted)'};margin-top:2px">${val>0?fmtRp(val):'—'}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${(myPB.filter(p=>p.jenis==='BNU').length>0||myBNU.length>0)?`
+    <h4 style="font-family:'Lora',serif;font-size:13px;margin-bottom:8px">💝 Riwayat BNU</h4>
+    <div class="tw"><table>
+      <thead><tr><th>Bulan/Tanggal</th><th>Tujuan</th><th>Nilai</th><th>Sumber</th></tr></thead>
+      <tbody>
+        ${myPB.filter(p=>p.jenis==='BNU').map(p=>`<tr>
+          <td>${MN[(parseInt(p.bulan)||1)-1]}</td>
+          <td>${p.tujuan||'-'}</td>
+          <td><b>${fmtRp(p.nilai)}</b></td>
+          <td style="font-size:11px;color:var(--muted)">Mandiri</td>
+        </tr>`).join('')}
+        ${myBNU.map(b=>`<tr>
+          <td>${fmtD(b.tanggal)}</td>
+          <td>${b.tujuan||'-'}</td>
+          <td><b>${fmtRp(b.nilai)}</b></td>
+          <td style="font-size:11px;color:var(--muted)">Laporan</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`:''}`;
+  oMo('mo-det');
+}
+
+async function expPBXLS(){
+  const [anggt, pbAll, lapAll, jdwAll] = await Promise.all([
+    fsAll('anggota','ord',true), fsAll('persembahan_bulanan','ord',false),
+    fsAll('laporan','ord',true), fsAll('jadwal','ord',true)
+  ]);
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Rekap per anggota
+  const hdrs1 = ['No','Nama Anggota','Alamat',...MN.slice(0,11).map(m=>m+' (PB)'),'Total Bulan','Total Nilai PB','Total BNU'];
+  const rows1 = anggt.map((a,idx)=>{
+    const myPB = pbAll.filter(p=>p.nama.toLowerCase()===a.nama.toLowerCase()&&p.jenis==='Persembahan Bulanan');
+    const myBNUpub = pbAll.filter(p=>p.nama.toLowerCase()===a.nama.toLowerCase()&&p.jenis==='BNU');
+    let totalBNULap=0;
+    lapAll.forEach(lap=>{ (lap.bnu||[]).forEach(b=>{ if((b.nama||'').toLowerCase()===a.nama.toLowerCase()) totalBNULap+=parseInt(b.nilai||0); }); });
+    const perBulan = [...Array(11).keys()].map(mi=>{ const v=myPB.filter(p=>parseInt(p.bulan)===mi+1).reduce((s,p)=>s+parseInt(p.nilai||0),0); return v||0; });
+    const totalPB = perBulan.reduce((s,v)=>s+v,0);
+    const totalBNU = myBNUpub.reduce((s,p)=>s+parseInt(p.nilai||0),0)+totalBNULap;
+    return [idx+1, a.nama, a.alamat||'', ...perBulan, myPB.length>0?myPB.map(p=>parseInt(p.bulan)).filter((v,i,arr)=>arr.indexOf(v)===i).length:0, totalPB, totalBNU];
+  });
+  const ws1 = XLSX.utils.aoa_to_sheet([['REKAP PERSEMBAHAN BULANAN — GKPS KRAKATAU SEKTOR 4 — 2026'],[],hdrs1,...rows1]);
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:hdrs1.length-1}}];
+  ws1['!cols']=[{wch:4},{wch:26},{wch:22},...Array(11).fill({wch:13}),{wch:12},{wch:16},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Rekap Anggota');
+
+  // Sheet 2: Detail per bulan
+  for(let m=1;m<=11;m++){
+    const pbBln = pbAll.filter(p=>parseInt(p.bulan)===m);
+    const lapBnu = [];
+    lapAll.forEach(lap=>{
+      const jdw=jdwAll.find(j=>j.id===lap.jadwalId);
+      if(!jdw||parseInt(jdw.tanggal?.split('-')[1])!==m) return;
+      (lap.bnu||[]).forEach(b=>lapBnu.push({...b, sumber:'Laporan '+fmtD(jdw.tanggal)}));
+    });
+    const all2 = [
+      ...pbBln.map(p=>['Persembahan Bulanan', p.nama||'', p.tujuan||'', parseInt(p.nilai)||0, 'Mandiri']),
+      ...lapBnu.map(b=>['BNU', b.nama||'', b.tujuan||'', parseInt(b.nilai)||0, b.sumber])
+    ];
+    if(all2.length===0) continue;
+    const hdrs2=['Jenis','Nama','Tujuan','Nilai','Sumber'];
+    const ws2=XLSX.utils.aoa_to_sheet([[`PERSEMBAHAN BULANAN ${MN[m-1].toUpperCase()} 2026 — GKPS KRAKATAU SEKTOR 4`],[],hdrs2,...all2]);
+    ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:4}}];
+    ws2['!cols']=[{wch:20},{wch:26},{wch:28},{wch:18},{wch:30}];
+    XLSX.utils.book_append_sheet(wb,ws2,MN[m-1].substring(0,3));
+  }
+  XLSX.writeFile(wb,`PersembahanBulanan_GKPS_Krakatau_S4_2026.xlsx`);
 }
 
 // ╔══════════════════════════════════════════════╗
