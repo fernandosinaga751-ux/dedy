@@ -2007,6 +2007,7 @@ function delMlBNUPub(i){
   if(list&&list.children.length===0) list.innerHTML='<p id="ml-bnupub-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>';
   updMlTotal();
 }
+function mlBnuRowHtml(i, nm='', tj='', vl=''){
   return `<div class="bnu-row" id="ml-bnu-row-${i}">
     <input type="text" placeholder="Nama" value="${nm||''}" list="dl-anggota-lap-mo" id="ml-bnu-nm-${i}" oninput="updMlTotal()" style="border:none;outline:none;font-size:13px;padding:4px 0;background:transparent;width:100%">
     <input type="text" placeholder="Tujuan" value="${tj||''}" id="ml-bnu-tj-${i}" style="border:none;outline:none;font-size:12px;padding:4px 0;background:transparent;width:100%;color:var(--muted)">
