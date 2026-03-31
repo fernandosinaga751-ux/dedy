@@ -290,6 +290,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 /* ── STM / BNU ──────────────────────────────── */
 .bnu-row{display:grid;grid-template-columns:1fr auto auto;gap:7px;align-items:center;margin-bottom:8px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px}
 .bnu-row input[type=text]{border:none;outline:none;font-size:13.5px;padding:4px 0;background:transparent}
+.bnu-row select{min-width:90px}
 .bnu-row .cur-box{min-width:130px}
 .bnu-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 5px;transition:color .15s;flex-shrink:0}
 .bnu-del:hover{color:var(--danger)}
@@ -500,12 +501,28 @@ datalist option{font-size:13px}
         <button class="btn btn-sm btn-g" onclick="addMlBNU()">➕ Tambah</button>
       </div>
       <div id="ml-bnu-list" style="margin-bottom:12px"></div>
+      <!-- Persembahan Bulanan Publik -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">💰 Persembahan Bulanan (dari Publik)</div>
+        <button class="btn btn-sm btn-g" onclick="addMlPB()">➕ Tambah</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 120px 140px auto;gap:7px;padding:0 10px 4px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px" id="ml-pb-header">
+        <span>Nama</span><span>Bulan</span><span>Nilai (Rp)</span><span></span>
+      </div>
+      <div id="ml-pb-list" style="margin-bottom:12px"></div>
+      <!-- BNU Publik -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">💝 BNU (dari Publik)</div>
+        <button class="btn btn-sm btn-g" onclick="addMlBNUPub()">➕ Tambah</button>
+      </div>
+      <div id="ml-bnupub-list" style="margin-bottom:12px"></div>
       <!-- Grand Total -->
       <div style="background:var(--sidebar);color:var(--gold);border-radius:8px;padding:11px 15px;display:flex;justify-content:space-between;align-items:center">
         <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.5px">💰 GRAND TOTAL</div>
         <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700" id="ml-grand">Rp 0</div>
       </div>
       <input type="hidden" id="ml-jid">
+      <input type="hidden" id="ml-jadwal-tanggal">
     </div>
     <div class="mf">
       <button class="btn btn-o" onclick="cMo('mo-lap')">Batal</button>
@@ -1833,15 +1850,41 @@ async function pgLap(){
       ${bnuArr.length>0?`<div class="lf" style="margin-top:8px"><div class="lfl">💝 BNU Admin (${bnuArr.length} item)</div>
         <div style="font-size:12px;color:var(--muted);margin-top:3px">${bnuArr.map(b=>`${b.nama||'-'}: ${fmtRp(b.nilai)}`).join(' · ')}</div>
       </div>`:''}
-      ${(pbItems.length>0||bnuPubItems.length>0)?`<div class="lf" style="margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
-        <div class="lfl">📋 Persembahan dari Halaman Publik</div>
-        ${pbItems.length>0?`<div style="margin-top:5px">
-          <div style="font-size:11px;font-weight:700;color:var(--success);margin-bottom:3px">💰 Persembahan Bulanan — ${fmtRp(totalPBPub)}</div>
-          <div style="font-size:11.5px;color:var(--muted)">${pbItems.map(p=>`${p.nama} (${PB_MONTHS[(parseInt(p.bulan)||1)-1]}): ${fmtRp(p.nilai)}`).join(' · ')}</div>
+      ${(pbItems.length>0||bnuPubItems.length>0)?`<div style="margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">📋 Persembahan dari Halaman Publik</div>
+        ${pbItems.length>0?`<div style="margin-bottom:6px">
+          <div style="font-size:11px;font-weight:700;color:var(--success);margin-bottom:4px">💰 Persembahan Bulanan — ${fmtRp(totalPBPub)}</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead><tr>
+              <th style="text-align:left;padding:5px 7px;background:var(--bg);color:var(--muted);font-size:10.5px;font-weight:700;border:1px solid var(--border)">Nama</th>
+              <th style="text-align:left;padding:5px 7px;background:var(--bg);color:var(--muted);font-size:10.5px;font-weight:700;border:1px solid var(--border)">Bulan</th>
+              <th style="text-align:right;padding:5px 7px;background:var(--bg);color:var(--muted);font-size:10.5px;font-weight:700;border:1px solid var(--border)">Nilai</th>
+            </tr></thead>
+            <tbody>
+              ${pbItems.map(p=>`<tr>
+                <td style="padding:5px 7px;border:1px solid var(--border);font-weight:600">${p.nama}</td>
+                <td style="padding:5px 7px;border:1px solid var(--border);color:var(--accent)">${PB_MONTHS[(parseInt(p.bulan)||1)-1]}</td>
+                <td style="padding:5px 7px;border:1px solid var(--border);text-align:right;font-weight:700;color:var(--success)">${fmtRp(p.nilai)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
         </div>`:''}
-        ${bnuPubItems.length>0?`<div style="margin-top:5px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:3px">💝 BNU Publik — ${fmtRp(totalBNUPub)}</div>
-          <div style="font-size:11.5px;color:var(--muted)">${bnuPubItems.map(p=>`${p.nama}${p.tujuan?' ('+p.tujuan+')':''}: ${fmtRp(p.nilai)}`).join(' · ')}</div>
+        ${bnuPubItems.length>0?`<div style="margin-top:6px">
+          <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px">💝 BNU — ${fmtRp(totalBNUPub)}</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead><tr>
+              <th style="text-align:left;padding:5px 7px;background:var(--bg);color:var(--muted);font-size:10.5px;font-weight:700;border:1px solid var(--border)">Nama</th>
+              <th style="text-align:left;padding:5px 7px;background:var(--bg);color:var(--muted);font-size:10.5px;font-weight:700;border:1px solid var(--border)">Tujuan</th>
+              <th style="text-align:right;padding:5px 7px;background:var(--bg);color:var(--muted);font-size:10.5px;font-weight:700;border:1px solid var(--border)">Nilai</th>
+            </tr></thead>
+            <tbody>
+              ${bnuPubItems.map(p=>`<tr>
+                <td style="padding:5px 7px;border:1px solid var(--border);font-weight:600">${p.nama}</td>
+                <td style="padding:5px 7px;border:1px solid var(--border);color:var(--muted);font-size:12px">${p.tujuan||'-'}</td>
+                <td style="padding:5px 7px;border:1px solid var(--border);text-align:right;font-weight:700;color:var(--accent)">${fmtRp(p.nilai)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
         </div>`:''}
       </div>`:''}
     </div>`;
@@ -1850,11 +1893,15 @@ async function pgLap(){
 }
 // ── MODAL LAPORAN EDIT ────────────────────────
 async function oMoLap(jadwalId){
-  const [jdwAll,lapAll,anggt]=await Promise.all([fsAll('jadwal','ord',true),fsAll('laporan','ord',true),fsAll('anggota','ord',true)]);
+  const [jdwAll,lapAll,anggt,pbAll]=await Promise.all([
+    fsAll('jadwal','ord',true),fsAll('laporan','ord',true),
+    fsAll('anggota','ord',true),fsAll('persembahan_bulanan','ord',false)
+  ]);
   const j=jdwAll.find(x=>x.id===jadwalId); if(!j)return;
   const lap=lapAll.find(l=>l.jadwalId===jadwalId)||{};
 
   document.getElementById('ml-jid').value=jadwalId;
+  document.getElementById('ml-jadwal-tanggal').value=j.tanggal||'';
   document.getElementById('ml-tgl').textContent=fmtD(j.tanggal)+' — ⏰ '+JAM;
   document.getElementById('ml-alamat').innerHTML=j.alamat?` &nbsp;·&nbsp; 📍 ${j.alamat}`:'';
   document.getElementById('ml-hd').value=lap.hadirDalahi||'';
@@ -1865,7 +1912,7 @@ async function oMoLap(jadwalId){
   document.getElementById('ml-stm').value=lap.stm?numFmt(lap.stm):'';
   document.getElementById('mo-lap-t').textContent='Edit Laporan — '+fmtD(j.tanggal);
 
-  // BNU list
+  // BNU admin list
   const bnuArr=Array.isArray(lap.bnu)?lap.bnu:[];
   const angNama=anggt.map(a=>a.nama);
   const bList=document.getElementById('ml-bnu-list');
@@ -1876,11 +1923,90 @@ async function oMoLap(jadwalId){
     ? '<p id="ml-bnu-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>'
     : bnuArr.map((b,i)=>mlBnuRowHtml(i,b.nama,b.tujuan,b.nilai)).join('');
 
+  // PB publik list (Persembahan Bulanan)
+  const pbJdw = pbAll.filter(p=> p.jadwalId === j.id || (p.tanggalJadwal && p.tanggalJadwal === j.tanggal));
+  const pbItems = pbJdw.filter(p=>p.jenis==='Persembahan Bulanan');
+  const bnuPubItems = pbJdw.filter(p=>p.jenis==='BNU');
+
+  const pbList=document.getElementById('ml-pb-list');
+  pbList.innerHTML = pbItems.length===0
+    ? '<p id="ml-pb-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>'
+    : pbItems.map((p,i)=>mlPBRowHtml(i,p.nama,parseInt(p.bulan)||new Date().getMonth()+1,p.nilai,p.id)).join('');
+
+  const bnuPubList=document.getElementById('ml-bnupub-list');
+  bnuPubList.innerHTML = bnuPubItems.length===0
+    ? '<p id="ml-bnupub-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>'
+    : bnuPubItems.map((p,i)=>mlBNUPubRowHtml(i,p.nama,p.tujuan,p.nilai,p.id)).join('');
+
   updMlTotal();
   oMo('mo-lap');
 }
 
-function mlBnuRowHtml(i, nm='', tj='', vl=''){
+// ── PB ROW HTML (Persembahan Bulanan publik di modal) ──
+function mlPBRowHtml(i, nm='', bl=0, vl='', docId=''){
+  const curM = bl||new Date().getMonth()+1;
+  return `<div id="ml-pb-row-${i}" data-docid="${docId}"
+    style="display:grid;grid-template-columns:1fr 120px 140px auto;gap:7px;align-items:center;
+           margin-bottom:8px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px">
+    <input type="text" placeholder="Nama" value="${nm||''}" list="dl-anggota-lap-mo" id="ml-pb-nm-${i}"
+      oninput="updMlTotal()"
+      style="border:none;outline:none;font-size:13px;padding:4px 0;background:transparent;width:100%">
+    <select id="ml-pb-bl-${i}"
+      style="border:1.5px solid var(--border);border-radius:6px;font-size:12px;padding:5px 6px;background:#fff;color:var(--text);width:100%;font-family:inherit">
+      ${PB_MONTHS.map((m,mi)=>`<option value="${mi+1}" ${(mi+1)===curM?'selected':''}>${m}</option>`).join('')}
+    </select>
+    <div class="cur-box"><span class="cur-prefix">Rp</span>
+      <input type="text" placeholder="0" value="${vl?numFmt(vl):''}" id="ml-pb-vl-${i}"
+        class="cur-inp" oninput="fmtCurInp(this);updMlTotal()">
+    </div>
+    <button class="bnu-del" onclick="delMlPB(${i})">✕</button>
+  </div>`;
+}
+
+// ── BNU PUBLIK ROW HTML ──
+function mlBNUPubRowHtml(i, nm='', tj='', vl='', docId=''){
+  return `<div class="bnu-row" id="ml-bnupub-row-${i}" data-docid="${docId}">
+    <input type="text" placeholder="Nama" value="${nm||''}" list="dl-anggota-lap-mo" id="ml-bnupub-nm-${i}" oninput="updMlTotal()" style="border:none;outline:none;font-size:13px;padding:4px 0;background:transparent;width:100%">
+    <input type="text" placeholder="Tujuan" value="${tj||''}" id="ml-bnupub-tj-${i}" style="border:none;outline:none;font-size:12px;padding:4px 0;background:transparent;width:100%;color:var(--muted)">
+    <div style="display:flex;gap:6px;align-items:center">
+      <div class="cur-box" style="min-width:120px"><span class="cur-prefix">Rp</span>
+        <input type="text" placeholder="0" value="${vl?numFmt(vl):''}" id="ml-bnupub-vl-${i}" class="cur-inp" oninput="fmtCurInp(this);updMlTotal()">
+      </div>
+      <button class="bnu-del" onclick="delMlBNUPub(${i})">✕</button>
+    </div>
+  </div>`;
+}
+
+function addMlPB(){
+  const list=document.getElementById('ml-pb-list');
+  const empty=document.getElementById('ml-pb-empty');
+  if(empty) empty.remove();
+  let i=0; while(document.getElementById('ml-pb-nm-'+i)!==null) i++;
+  const div=document.createElement('div');
+  div.innerHTML=mlPBRowHtml(i);
+  list.appendChild(div.firstElementChild);
+}
+function delMlPB(i){
+  const row=document.getElementById('ml-pb-row-'+i); if(row) row.remove();
+  const list=document.getElementById('ml-pb-list');
+  if(list&&list.children.length===0) list.innerHTML='<p id="ml-pb-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>';
+  updMlTotal();
+}
+function addMlBNUPub(){
+  const list=document.getElementById('ml-bnupub-list');
+  const empty=document.getElementById('ml-bnupub-empty');
+  if(empty) empty.remove();
+  let i=0; while(document.getElementById('ml-bnupub-nm-'+i)!==null) i++;
+  const div=document.createElement('div');
+  div.innerHTML=mlBNUPubRowHtml(i);
+  list.appendChild(div.firstElementChild);
+}
+function delMlBNUPub(i){
+  const row=document.getElementById('ml-bnupub-row-'+i); if(row) row.remove();
+  const list=document.getElementById('ml-bnupub-list');
+  if(list&&list.children.length===0) list.innerHTML='<p id="ml-bnupub-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah.</p>';
+  updMlTotal();
+}
   return `<div class="bnu-row" id="ml-bnu-row-${i}">
     <input type="text" placeholder="Nama" value="${nm||''}" list="dl-anggota-lap-mo" id="ml-bnu-nm-${i}" oninput="updMlTotal()" style="border:none;outline:none;font-size:13px;padding:4px 0;background:transparent;width:100%">
     <input type="text" placeholder="Tujuan" value="${tj||''}" id="ml-bnu-tj-${i}" style="border:none;outline:none;font-size:12px;padding:4px 0;background:transparent;width:100%;color:var(--muted)">
@@ -1915,18 +2041,25 @@ function updMlTotal(){
   const stm=parseRp(document.getElementById('ml-stm')?.value)||0;
   let bnu=0,i=0;
   while(document.getElementById('ml-bnu-vl-'+i)!==null){ bnu+=parseRp(document.getElementById('ml-bnu-vl-'+i).value)||0; i++; }
-  const grand=g1+g2+g3+stm+bnu;
+  let pb=0,j=0;
+  while(document.getElementById('ml-pb-vl-'+j)!==null){ pb+=parseRp(document.getElementById('ml-pb-vl-'+j).value)||0; j++; }
+  let bnupub=0,k=0;
+  while(document.getElementById('ml-bnupub-vl-'+k)!==null){ bnupub+=parseRp(document.getElementById('ml-bnupub-vl-'+k).value)||0; k++; }
+  const grand=g1+g2+g3+stm+bnu+pb+bnupub;
   const el=document.getElementById('ml-grand'); if(el) el.textContent='Rp '+numFmt(grand);
 }
 
 async function saveLapMo(){
   const jadwalId=document.getElementById('ml-jid').value;
+  const jadwalTanggal=document.getElementById('ml-jadwal-tanggal').value;
   const g1=parseRp(document.getElementById('ml-g1')?.value)||0;
   const g2=parseRp(document.getElementById('ml-g2')?.value)||0;
   const g3=parseRp(document.getElementById('ml-g3')?.value)||0;
   const stm=parseRp(document.getElementById('ml-stm')?.value)||0;
   const hDalahi=parseInt(document.getElementById('ml-hd')?.value)||0;
   const hNaboru=parseInt(document.getElementById('ml-hn')?.value)||0;
+
+  // BNU admin
   const bnuArr=[]; let i=0;
   while(document.getElementById('ml-bnu-nm-'+i)!==null){
     const nm=document.getElementById('ml-bnu-nm-'+i).value.trim();
@@ -1935,6 +2068,8 @@ async function saveLapMo(){
     if(nm||vl) bnuArr.push({nama:nm,tujuan:tj,nilai:vl});
     i++;
   }
+
+  // Simpan laporan utama
   const lapAll=await fsAll('laporan','ord',true);
   const jdwAll=await fsAll('jadwal','ord',true);
   const jdw=jdwAll.find(j=>j.id===jadwalId);
@@ -1944,6 +2079,43 @@ async function saveLapMo(){
     galangan1:g1,galangan2:g2,galangan3:g3,stm,bnu:bnuArr,ord:Date.now()};
   if(ex) await fsUpd('laporan',ex.id,data);
   else await fsAdd('laporan',data);
+
+  // Simpan PB publik (Persembahan Bulanan) — update/tambah ke koleksi persembahan_bulanan
+  // Kumpulkan data dari form
+  const pbFormRows=[]; let pi=0;
+  while(document.getElementById('ml-pb-nm-'+pi)!==null){
+    const rowEl=document.getElementById('ml-pb-row-'+pi);
+    const docId=rowEl?.dataset?.docid||'';
+    const nm=document.getElementById('ml-pb-nm-'+pi)?.value.trim()||'';
+    const bl=parseInt(document.getElementById('ml-pb-bl-'+pi)?.value)||new Date().getMonth()+1;
+    const vl=parseRp(document.getElementById('ml-pb-vl-'+pi)?.value)||0;
+    if(nm&&vl>0) pbFormRows.push({docId,nama:nm,bulan:bl,nilai:vl,jenis:'Persembahan Bulanan'});
+    pi++;
+  }
+
+  // Kumpulkan data BNU publik dari form
+  const bnuPubFormRows=[]; let bi=0;
+  while(document.getElementById('ml-bnupub-nm-'+bi)!==null){
+    const rowEl=document.getElementById('ml-bnupub-row-'+bi);
+    const docId=rowEl?.dataset?.docid||'';
+    const nm=document.getElementById('ml-bnupub-nm-'+bi)?.value.trim()||'';
+    const tj=document.getElementById('ml-bnupub-tj-'+bi)?.value.trim()||'';
+    const vl=parseRp(document.getElementById('ml-bnupub-vl-'+bi)?.value)||0;
+    if(nm&&vl>0) bnuPubFormRows.push({docId,nama:nm,tujuan:tj,nilai:vl,jenis:'BNU'});
+    bi++;
+  }
+
+  // Update atau tambah PB dan BNU publik
+  for(const r of [...pbFormRows,...bnuPubFormRows]){
+    const rec={nama:r.nama,jenis:r.jenis,bulan:r.bulan||0,nilai:r.nilai,tujuan:r.tujuan||'',
+      tahun:2026,jadwalId,tanggalJadwal:jadwalTanggal,ord:Date.now()};
+    if(r.docId && r.docId!==''){
+      await fsUpd('persembahan_bulanan',r.docId,rec);
+    } else {
+      await fsAdd('persembahan_bulanan',rec);
+    }
+  }
+
   cMo('mo-lap');
   renderPage('laporan');
 }
