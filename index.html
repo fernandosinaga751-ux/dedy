@@ -737,11 +737,9 @@ async function loadPublic(){
     document.getElementById('pub-form').innerHTML=renderPubForm(anggota, pubState.laporan);
     document.getElementById('pub-form').classList.remove('hidden');
 
-    // Init PB datalist & state
-    _pubPBAngNama = anggota.map(a=>a.nama);
-    let dl = document.getElementById('dl-pub-pb-ang');
-    if(!dl){ dl=document.createElement('datalist'); dl.id='dl-pub-pb-ang'; document.body.appendChild(dl); }
-    dl.innerHTML = _pubPBAngNama.map(n=>`<option value="${n}">`).join('');
+    // Update datalist PB dengan nama anggota
+    const dlPB = document.getElementById('dl-pub-pb-ang');
+    if(dlPB) dlPB.innerHTML = anggota.map(a=>`<option value="${a.nama}">`).join('');
     // Init first PB row type visibility
     updPBType(0);
 
@@ -787,7 +785,6 @@ function renderPubJadwal(j){
 function renderPubForm(anggota, lap){
   const g1=lap?.galangan1||'', g2=lap?.galangan2||'', g3=lap?.galangan3||'';
   const stm=lap?.stm||'';
-  const bnuArr=Array.isArray(lap?.bnu)?lap.bnu:[];
   const angNama=anggota.map(a=>a.nama);
 
   // Simpan data anggota ke state untuk diakses autocomplete
@@ -799,7 +796,7 @@ function renderPubForm(anggota, lap){
       ? '<p style="text-align:center;color:var(--muted);padding:18px 0">Belum ada data anggota. Tambahkan di menu Admin.</p>'
       : `
     <div class="absen-search-wrap" id="absen-search-wrap">
-      <span class="absen-search-icon"></span>
+      <span class="absen-search-icon">🔍</span>
       <input type="text" id="absen-search-input"
         placeholder="Ketik nama anggota..."
         autocomplete="off"
@@ -832,31 +829,18 @@ function renderPubForm(anggota, lap){
       </div>
     </div>
 
-    <!-- BNU / PERSEMBAHAN BULANAN -->
-    <div class="pub-bnu-wrap">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <h4>💝 Persembahan Bulanan / BNU</h4>
-        <button class="tbtn" onclick="addPubBNU()" style="padding:5px 12px;font-size:12px">➕ Tambah</button>
-      </div>
-      <datalist id="dl-anggota-pub">${angNama.map(n=>'<option value="'+n+'">').join('')}</datalist>
-      <div id="pub-bnu-list">
-        ${bnuArr.length===0
-          ? '<p id="pub-bnu-empty" style="font-size:12.5px;color:var(--muted);padding:4px 0">Belum ada. Klik ➕ Tambah untuk menambahkan.</p>'
-          : bnuArr.map((b,bi)=>pubBNURowHtml(bi, b.nama, b.tujuan, b.nilai)).join('')}
-      </div>
-    </div>
-
     <button class="pbtn dark" id="pub-kirim-btn" onclick="submitAbsen()">📤 Kirim Data Kehadiran</button>
   </div>
 
   <!-- FORM PERSEMBAHAN BULANAN MANDIRI -->
   <div class="pub-card" id="pub-pb-form">
-    <h3>💝 Input Persembahan Bulanan</h3>
-    <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;margin-top:-6px">Langsung input persembahan bulanan tanpa perlu absen. Data masuk ke rekap admin.</p>
+    <h3>💝 Persembahan Bulanan / BNU</h3>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;margin-top:-6px">Input nama, jenis, bulan, dan nilai. Data langsung masuk ke rekap admin.</p>
+    <datalist id="dl-pub-pb-ang">${angNama.map(n=>'<option value="'+n+'">').join('')}</datalist>
     <div id="pub-pb-rows">
-      ${pubPBRowHtml(0, angNama)}
+      ${pubPBRowHtml(0)}
     </div>
-    <button class="tbtn" onclick="addPubPBRow(${JSON.stringify(angNama)})" style="margin-top:8px;padding:7px 16px;font-size:12.5px;border-color:var(--gold);color:var(--accent)">➕ Tambah Pemberi</button>
+    <button class="tbtn" onclick="addPubPBRow()" style="margin-top:8px;padding:7px 16px;font-size:12.5px;border-color:var(--gold);color:var(--accent)">➕ Tambah Pemberi</button>
     <button class="pbtn go" id="pub-pb-btn" onclick="submitPubPB()" style="margin-top:14px">📤 Kirim Persembahan Bulanan</button>
   </div>`;
 }
@@ -1072,18 +1056,18 @@ function pubBNURowHtml(bi, nm='', tj='', vl=''){
 const PB_MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const PB_TYPES = ['Persembahan Bulanan','BNU'];
 
-function pubPBRowHtml(i, angNama=[]){
+function pubPBRowHtml(i){
   const curM = new Date().getMonth(); // 0-based
   return `<div class="pub-pb-row" id="pub-pb-row-${i}">
-    <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start;margin-bottom:8px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);padding-top:3px">Pemberi #${i+1}</div>
-      ${i>0?`<button class="pub-bnu-del" onclick="delPubPBRow(${i})" style="margin-top:0">✕</button>`:'<div></div>'}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Pemberi #${i+1}</div>
+      ${i>0?`<button class="pub-bnu-del" onclick="delPubPBRow(${i})">✕</button>`:''}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <div>
         <label style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px">Nama</label>
         <input type="text" id="pub-pb-nm-${i}" placeholder="Ketik nama..." list="dl-pub-pb-ang" autocomplete="off"
-          style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:var(--text)" oninput="updPBType(${i})">
+          style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:var(--text)">
       </div>
       <div>
         <label style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px">Jenis</label>
@@ -1109,12 +1093,11 @@ function pubPBRowHtml(i, angNama=[]){
         </div>
       </div>
     </div>
-    <div id="pub-pb-tujuan-wrap-${i}" style="margin-bottom:6px">
+    <div id="pub-pb-tujuan-wrap-${i}" style="margin-bottom:4px;display:none">
       <label style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px">Tujuan BNU</label>
       <input type="text" id="pub-pb-tj-${i}" placeholder="Contoh: Pengutusan, Pembangunan..."
         style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:var(--text)">
     </div>
-    <hr style="border:none;border-top:1px dashed var(--border);margin:10px 0 4px">
   </div>`;
 }
 
@@ -1127,19 +1110,15 @@ function updPBType(i){
 }
 
 let _pubPBAngNama = [];
-function addPubPBRow(angNama){
-  _pubPBAngNama = angNama || _pubPBAngNama;
+function addPubPBRow(){
   const wrap = document.getElementById('pub-pb-rows');
+  if(!wrap) return;
   let i = 0;
   while(document.getElementById('pub-pb-nm-'+i)!==null) i++;
   const div = document.createElement('div');
-  div.innerHTML = pubPBRowHtml(i, _pubPBAngNama);
+  div.innerHTML = pubPBRowHtml(i);
   wrap.appendChild(div.firstElementChild);
-  // init type visibility
   updPBType(i);
-  // init datalist
-  let dl = document.getElementById('dl-pub-pb-ang');
-  if(!dl){ dl=document.createElement('datalist'); dl.id='dl-pub-pb-ang'; dl.innerHTML=_pubPBAngNama.map(n=>`<option value="${n}">`).join(''); document.body.appendChild(dl); }
 }
 function delPubPBRow(i){
   const row = document.getElementById('pub-pb-row-'+i);
@@ -1189,7 +1168,6 @@ async function submitAbsen(){
     const g2=parseRp(document.getElementById('pg2')?.value)||0;
     const g3=parseRp(document.getElementById('pg3')?.value)||0;
     const stm=parseRp(document.getElementById('pub-stm')?.value)||0;
-    const bnuArr=getPubBNUData();
     const jdw=pubState.jadwal;
 
     // Save/create jadwal if it doesn't exist
@@ -1209,22 +1187,9 @@ async function submitAbsen(){
       const jH=Object.values(pubState.map).filter(v=>v===true).length;
       const lapData={jadwalId,tanggal:jdw.tanggal,jumlahHadir:jH,
         galangan1:g1,galangan2:g2,galangan3:g3,
-        stm:stm, bnu:bnuArr};
+        stm:stm, bnu:[]};
       if(lapArr.length) await fsUpd('laporan',lapArr[0].id,lapData);
       else await fsAdd('laporan',lapData);
-
-      // Sinkron BNU ke persembahan_bulanan
-      const blnLap = parseInt(jdw.tanggal?.split('-')[1])||new Date().getMonth()+1;
-      // Hapus BNU lama dari jadwal ini dulu
-      const oldPB = await fsWhere('persembahan_bulanan','jadwalId','==',jadwalId);
-      for(const op of oldPB) await fsDel('persembahan_bulanan',op.id);
-      // Simpan baru
-      for(const b of bnuArr){
-        if(b.nama||b.nilai) await fsAdd('persembahan_bulanan',{
-          nama:b.nama||'', jenis:'BNU', bulan:blnLap, nilai:parseInt(b.nilai)||0,
-          tujuan:b.tujuan||'', jadwalId, tahun:2026, ord:Date.now()
-        });
-      }
     }
 
     // Show summary
@@ -1233,18 +1198,17 @@ async function submitAbsen(){
     const jT=Object.values(pubState.map).filter(v=>v===false).length;
     const total=Object.keys(pubState.map).length;
     document.getElementById('pub-form').classList.add('hidden');
-    document.getElementById('pub-summary').innerHTML=renderPubSummary(jdw, anggota, jH, jT, total, g1, g2, g3, stm, bnuArr);
+    document.getElementById('pub-summary').innerHTML=renderPubSummary(jdw, anggota, jH, jT, total, g1, g2, g3, stm);
     document.getElementById('pub-summary').classList.remove('hidden');
   } catch(e){
     alert('Gagal menyimpan: '+e.message);
     if(btn){ btn.disabled=false; btn.textContent='📤 Kirim Data Kehadiran'; }
   }
 }
-function renderPubSummary(jdw, anggota, jH, jT, total, g1, g2, g3, stm, bnuArr){
-  stm=stm||0; bnuArr=bnuArr||[];
+function renderPubSummary(jdw, anggota, jH, jT, total, g1, g2, g3, stm){
+  stm=stm||0;
   const totalG=g1+g2+g3;
-  const totalBNU=bnuArr.reduce((s,b)=>s+(parseInt(b.nilai)||0),0);
-  const grandTotal=totalG+stm+totalBNU;
+  const grandTotal=totalG+stm;
   return `<div class="pub-card" style="text-align:center">
     <div style="font-size:52px;margin-bottom:8px">🙏</div>
     <h3 style="font-family:'Cinzel',serif;font-size:16px;border:none;padding:0;margin-bottom:4px;text-align:center">Data Berhasil Dikirim!</h3>
@@ -1252,7 +1216,7 @@ function renderPubSummary(jdw, anggota, jH, jT, total, g1, g2, g3, stm, bnuArr){
     <div class="sum-grid">
       <div class="sum-cell"><div class="n">${jH}</div><div class="l">✅ Hadir</div></div>
       <div class="sum-cell"><div class="n">${jT}</div><div class="l">❌ Tidak</div></div>
-      <div class="sum-cell"><div class="n">${total}</div><div class="l">👥 Total Anggota</div></div>
+      <div class="sum-cell"><div class="n">${total}</div><div class="l">👥 Total</div></div>
     </div>
     ${totalG>0?`<div style="background:var(--bg);border-radius:8px;padding:11px;margin-bottom:8px;font-size:13.5px;text-align:left">
       💰 <b>Galangan: ${fmtRp(totalG)}</b><br>
@@ -1261,12 +1225,8 @@ function renderPubSummary(jdw, anggota, jH, jT, total, g1, g2, g3, stm, bnuArr){
     ${stm>0?`<div style="background:var(--bg);border-radius:8px;padding:11px;margin-bottom:8px;font-size:13.5px;text-align:left">
       🏥 <b>STM: ${fmtRp(stm)}</b>
     </div>`:''}
-    ${bnuArr.length>0?`<div style="background:var(--bg);border-radius:8px;padding:11px;margin-bottom:8px;font-size:13px;text-align:left">
-      💝 <b>BNU (${bnuArr.length} item): ${fmtRp(totalBNU)}</b><br>
-      ${bnuArr.map(b=>`<span style="font-size:11.5px;color:var(--muted)">• ${b.nama||'-'}${b.tujuan?' ('+b.tujuan+')':''}: ${fmtRp(b.nilai)}</span><br>`).join('')}
-    </div>`:''}
     ${grandTotal>0?`<div style="background:var(--sidebar);color:var(--gold);border-radius:8px;padding:12px;margin-bottom:13px;font-family:'Cinzel',serif">
-      💰 GRAND TOTAL: <b style="font-size:17px">${fmtRp(grandTotal)}</b>
+      💰 TOTAL: <b style="font-size:17px">${fmtRp(grandTotal)}</b>
     </div>`:''}
     <div style="text-align:left;max-height:220px;overflow-y:auto;margin-bottom:14px">
       ${Object.entries(pubState.map).map(([aid,h])=>{
@@ -1943,7 +1903,9 @@ async function pgPersembahan(){
   <div class="ph">
     <h2>💝 Persembahan Bulanan — Sektor 4</h2>
     <div class="ph-acts">
-      <button class="btn btn-g" onclick="expPBXLS()">📥 Export Excel</button>
+      <button class="btn btn-s" onclick="expPBPhoto()">📷 Foto</button>
+      <button class="btn btn-s" style="background:#c0392b" onclick="expPBPDF()">📄 PDF</button>
+      <button class="btn btn-g" onclick="expPBXLS()">📥 Excel</button>
     </div>
   </div>
 
@@ -2161,6 +2123,118 @@ async function expPBXLS(){
     XLSX.utils.book_append_sheet(wb,ws2,MN[m-1].substring(0,3));
   }
   XLSX.writeFile(wb,`PersembahanBulanan_GKPS_Krakatau_S4_2026.xlsx`);
+}
+
+function buildTplPB(pbMap, selBln, anggt, pg){
+  pg = pg||{};
+  const pbBln = pbMap[selBln]||[];
+  const totalPB = pbBln.filter(p=>p.jenis==='Persembahan Bulanan').reduce((s,p)=>s+p.nilai,0);
+  const totalBNU = pbBln.filter(p=>p.jenis==='BNU').reduce((s,p)=>s+p.nilai,0);
+
+  // Rekap hadir per anggota bulan ini
+  const rekapRows = anggt.map(a=>{
+    const bayar = pbBln.filter(p=>p.nama.toLowerCase()===a.nama.toLowerCase()&&p.jenis==='Persembahan Bulanan');
+    const bnu = pbBln.filter(p=>p.nama.toLowerCase()===a.nama.toLowerCase()&&p.jenis==='BNU');
+    return {nama:a.nama, bayar:bayar.length>0, nilaiPB:bayar.reduce((s,x)=>s+x.nilai,0), nilaiB:bnu.reduce((s,x)=>s+x.nilai,0), bnu};
+  });
+
+  return `<div style="font-family:Arial,sans-serif;color:#1a1a1a;font-size:11px;line-height:1.5">
+    <div style="text-align:center;padding-bottom:10px;margin-bottom:12px;border-bottom:2px solid #1a2a1a">
+      <img src="${LOGO_GKPS_CIRCLE}" style="width:48px;height:48px;object-fit:contain;display:block;margin:0 auto 5px" alt="GKPS">
+      <div style="font-size:13px;font-weight:bold;font-family:Georgia,serif;letter-spacing:1px">PERSEMBAHAN BULANAN</div>
+      <div style="font-size:10px;color:#555;margin-top:2px">GKPS Krakatau Sektor 4 — ${MN[selBln-1]} 2026</div>
+    </div>
+
+    <!-- Summary -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#f5f0e8;border:1px solid #d9c9a3;border-radius:5px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:3px">Total Persembahan Bulanan</div>
+        <div style="font-size:13px;font-weight:bold;color:#1a2a1a">${fmtRp(totalPB)}</div>
+      </div>
+      <div style="background:#f5f0e8;border:1px solid #d9c9a3;border-radius:5px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:3px">Total BNU</div>
+        <div style="font-size:13px;font-weight:bold;color:#1a2a1a">${fmtRp(totalBNU)}</div>
+      </div>
+    </div>
+
+    <!-- Rekap per anggota -->
+    <div style="font-size:10px;font-weight:bold;color:#1a2a1a;text-transform:uppercase;margin-bottom:6px;letter-spacing:.5px">Rekap Keluarga</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:12px">
+      <thead>
+        <tr style="background:#1a2a1a;color:#d4a843">
+          <th style="padding:5px 8px;text-align:left;border:1px solid #ddd">No</th>
+          <th style="padding:5px 8px;text-align:left;border:1px solid #ddd">Nama Keluarga</th>
+          <th style="padding:5px 8px;text-align:center;border:1px solid #ddd">PB</th>
+          <th style="padding:5px 8px;text-align:right;border:1px solid #ddd">Nilai PB</th>
+          <th style="padding:5px 8px;text-align:right;border:1px solid #ddd">BNU</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rekapRows.map((r,i)=>`<tr style="background:${i%2===0?'#f5f0e8':'#fff'}">
+          <td style="padding:5px 8px;border:1px solid #ddd">${i+1}</td>
+          <td style="padding:5px 8px;border:1px solid #ddd;font-weight:${r.bayar?'bold':'normal'}">${r.nama}</td>
+          <td style="padding:5px 8px;border:1px solid #ddd;text-align:center">${r.bayar?'✅':'—'}</td>
+          <td style="padding:5px 8px;border:1px solid #ddd;text-align:right">${r.nilaiPB>0?fmtRp(r.nilaiPB):'—'}</td>
+          <td style="padding:5px 8px;border:1px solid #ddd;text-align:right">${r.nilaiB>0?fmtRp(r.nilaiB):'—'}</td>
+        </tr>`).join('')}
+        <tr style="background:#fff3cd;font-weight:bold">
+          <td colspan="3" style="padding:6px 8px;border:1px solid #ddd;text-align:right">Total</td>
+          <td style="padding:6px 8px;border:1px solid #ddd;text-align:right">${fmtRp(totalPB)}</td>
+          <td style="padding:6px 8px;border:1px solid #ddd;text-align:right">${fmtRp(totalBNU)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    ${pbBln.filter(p=>p.jenis==='BNU').length>0?`
+    <div style="font-size:10px;font-weight:bold;color:#1a2a1a;text-transform:uppercase;margin-bottom:6px;letter-spacing:.5px">Detail BNU</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:12px">
+      <thead>
+        <tr style="background:#1a2a1a;color:#d4a843">
+          <th style="padding:5px 8px;text-align:left;border:1px solid #ddd">Nama</th>
+          <th style="padding:5px 8px;text-align:left;border:1px solid #ddd">Tujuan</th>
+          <th style="padding:5px 8px;text-align:right;border:1px solid #ddd">Nilai</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${pbBln.filter(p=>p.jenis==='BNU').map((p,i)=>`<tr style="background:${i%2===0?'#f5f0e8':'#fff'}">
+          <td style="padding:5px 8px;border:1px solid #ddd">${p.nama||'-'}</td>
+          <td style="padding:5px 8px;border:1px solid #ddd;color:#777">${p.tujuan||'-'}</td>
+          <td style="padding:5px 8px;border:1px solid #ddd;text-align:right;font-weight:bold">${fmtRp(p.nilai)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`:''}
+
+    ${(pg.ketua||pg.sekretaris||pg.bendahara)?`
+    <div style="border-top:1px solid #1a2a1a;padding-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin-top:8px">
+      ${pg.ketua?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:2px">Ketua</div><div style="font-size:10px;font-weight:bold">${pg.ketua}</div></div>`:'<div></div>'}
+      ${pg.sekretaris?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:2px">Sekretaris</div><div style="font-size:10px;font-weight:bold">${pg.sekretaris}</div></div>`:'<div></div>'}
+      ${pg.bendahara?`<div><div style="font-size:9px;color:#777;text-transform:uppercase;margin-bottom:2px">Bendahara</div><div style="font-size:10px;font-weight:bold">${pg.bendahara}</div></div>`:'<div></div>'}
+    </div>`:''}
+    <div style="text-align:center;margin-top:6px;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:5px">Partonggoan GKPS Krakatau Sektor 4 · ${MN[selBln-1]} 2026</div>
+  </div>`;
+}
+
+async function _buildPBMapForExport(){
+  const [anggt,pbAll,lapAll,jdwAll,pg] = await Promise.all([
+    fsAll('anggota','ord',true), fsAll('persembahan_bulanan','ord',false),
+    fsAll('laporan','ord',true), fsAll('jadwal','ord',true), getPengurus()
+  ]);
+  const pbMap = {};
+  for(let m=1;m<=11;m++) pbMap[m]=[];
+  pbAll.forEach(p=>{ const b=parseInt(p.bulan)||0; if(b>=1&&b<=11) pbMap[b].push({nama:p.nama||'',jenis:p.jenis||'Persembahan Bulanan',nilai:parseInt(p.nilai)||0,tujuan:p.tujuan||'',sumber:'Mandiri',id:p.id}); });
+  lapAll.forEach(lap=>{ const jdw=jdwAll.find(j=>j.id===lap.jadwalId); if(!jdw||!jdw.tanggal) return; const b=parseInt(jdw.tanggal.split('-')[1]); if(b<1||b>11) return; (lap.bnu||[]).forEach(bnu=>{ pbMap[b].push({nama:bnu.nama||'',jenis:'BNU',nilai:parseInt(bnu.nilai)||0,tujuan:bnu.tujuan||'',sumber:'Laporan',id:null}); }); });
+  return {pbMap, anggt, pg};
+}
+
+async function expPBPDF(){
+  const selBln = window._pbBln || new Date().getMonth()+1;
+  const {pbMap,anggt,pg} = await _buildPBMapForExport();
+  await captureAndExport(buildTplPB(pbMap,selBln,anggt,pg), `PersembahanBulanan_${MN[selBln-1]}_2026`, true);
+}
+async function expPBPhoto(){
+  const selBln = window._pbBln || new Date().getMonth()+1;
+  const {pbMap,anggt,pg} = await _buildPBMapForExport();
+  await captureAndExport(buildTplPB(pbMap,selBln,anggt,pg), `PersembahanBulanan_${MN[selBln-1]}_2026`, false);
 }
 
 // ╔══════════════════════════════════════════════╗
